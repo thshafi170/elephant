@@ -34,16 +34,17 @@ How to query, example:
 1. Open socket connection with f.e. `nc -U /tmp/elephant.sock`
 2. You'll retrieve a message `session:number` => you gotta keep that in mind
 3. You can now query with: `query;NUMBERFROMABOVE;firefox;desktopapplications`
-4. You'll retrieve a list of entries:
+4. You'll retrieve a `queryid`: `query:SESSIONID:QUERYID`
+5. You'll retrieve a list of entries:
 
 ```
-/usr/share/applications/firefox-developer-edition.desktop;Firefox Developer Edition;Web Browser;firefox-developer-edition;desktopapplications;6,5,4,3,2,1,0;0;text
+1:1:/usr/share/applications/firefox-developer-edition.desktop;Firefox Developer Edition;Web Browser;firefox-developer-edition;desktopapplications;6,5,4,3,2,1,0;0;text
 ```
 
 To break this down:
 
 ```
-IDENTIFIER;TEXT;SUBTEXT;ICON;PROVIDER;POSITIONS OF FUZZY MATCH;STARTING POSITION OF FUZZY MATCH;FUZZY MATCH firefox-developer-edition
+SESSIONID:QUERYID:IDENTIFIER;TEXT;SUBTEXT;ICON;PROVIDER;POSITIONS OF FUZZY MATCH;STARTING POSITION OF FUZZY MATCH;FUZZY MATCH FIELDNAME
 ```
 
 5. You can activate an item like this:
