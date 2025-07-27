@@ -71,6 +71,10 @@ func Query(sid uint32, text string, providers []string, conn net.Conn) {
 		return 0
 	})
 
+	if len(entries) == 0 {
+		conn.Write(fmt.Appendln(nil, "NORESULTS"))
+	}
+
 	for _, v := range entries {
 		conn.Write(fmt.Appendln(nil, v.String()))
 	}

@@ -43,7 +43,7 @@ func Query(query string) []common.Entry {
 				e.Fuzzy.Field = "subtext"
 			}
 
-			if e.Score > 0 {
+			if e.Score > 0 || query == "" {
 				entries = append(entries, e)
 			}
 		}
@@ -71,7 +71,7 @@ func Query(query string) []common.Entry {
 					e.Fuzzy.Field = "subtext"
 				}
 
-				if e.Score > 0 {
+				if e.Score > 0 || query == "" {
 					entries = append(entries, e)
 				}
 			}
