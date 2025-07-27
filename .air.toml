@@ -1,0 +1,50 @@
+root = "."
+tmp_dir = "tmp"
+
+[build]
+# Just plain old shell command. You could use `make` as well.
+cmd = "cd cmd && go build -o /tmp/elephant-air . && cd ../internal/providers/files && go build -buildmode=plugin && cp files.so /home/andrej/.config/elephant/providers/ && cd ../desktopapplications && go build -buildmode=plugin && cp desktopapplications.so /home/andrej/.config/elephant/providers/"
+# pre_cmd = [
+#   "cp internal/providers/files/files.so ",
+#   "cp internal/providers/desktopapplications/desktopapplications.so ",
+# ]
+# Binary file yields from `cmd`.
+bin = "/tmp/elephant-air"
+# Watch these filename extensions.
+include_ext = ["go"]
+# Ignore these filename extensions or directories.
+exclude_dir = []
+# Watch these directories if you specified.
+include_dir = []
+# Watch these files.
+include_file = []
+# Exclude files.
+exclude_file = []
+# Exclude specific regular expressions.
+exclude_regex = ["_test\\.go"]
+# Exclude unchanged files.
+exclude_unchanged = true
+# Follow symlink for directories
+follow_symlink = true
+# This log file is placed in your tmp_dir.
+log = "air.log"
+# It's not necessary to trigger build each time file changes if it's too frequent.
+delay = 0 # ms
+# Stop running old binary when build errors occur.
+stop_on_error = true
+# Send Interrupt signal before killing process (windows does not support this feature)
+send_interrupt = false
+# Delay after sending Interrupt signal
+kill_delay = 500 # nanosecond
+# Rerun binary or not
+rerun = true
+# Delay after each execution
+rerun_delay = 500
+
+[misc]
+# Delete tmp directory on exit
+clean_on_exit = true
+
+[screen]
+clear_on_rebuild = true
+keep_scroll = true

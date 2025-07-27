@@ -4,6 +4,8 @@ import (
 	"log/slog"
 	"os"
 	"os/exec"
+
+	"github.com/abenz1267/elephant/internal/providers"
 )
 
 // uwsm app -- firefox-developer-edition.desktop:open-profile-manager
@@ -38,7 +40,7 @@ func init() {
 	}
 }
 
-func Activate(sid uint32, identifier, action string) {
+func Activate(qid uint32, identifier, action string) {
 	cmd := exec.Command(command, identifier)
 	if command == "uwsm" {
 		cmd = exec.Command("uwsm", "app", "-- ", identifier)
@@ -52,4 +54,6 @@ func Activate(sid uint32, identifier, action string) {
 	go func() {
 		cmd.Wait()
 	}()
+
+	providers.CleanupChan <- qid
 }

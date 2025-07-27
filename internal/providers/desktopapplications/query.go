@@ -5,18 +5,43 @@ import (
 	"log/slog"
 	"os"
 	"slices"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/abenz1267/elephant/internal/common"
 )
 
-func Query(query string) []common.Entry {
+var (
+	results      map[uint32]map[string]*DesktopFile
+	resultsMutex sync.Mutex
+)
+
+func init() {
+	results = make(map[uint32]map[string]*DesktopFile)
+}
+
+func Query(qid uint32, query string) []common.Entry {
 	start := time.Now()
 	desktop := os.Getenv("XDG_CURRENT_DESKTOP")
 	entries := []common.Entry{}
 
-	for k, v := range files {
+	var toMatch map[string]*DesktopFile
+
+	v, ok := results[qid]
+	if ok {
+		toMatch = v
+		slog.Info(Name, "query", "resuming", "files", len(toMatch))
+	} else {
+		toMatch = files
+	}
+
+	resultsMutex.Lock()
+	results[qid] = make(map[string]*DesktopFile)
+	resultsMutex.Unlock()
+
+	for k, v := range toMatch {
 		if len(v.NotShowIn) != 0 && slices.Contains(v.NotShowIn, desktop) || len(v.OnlyShowIn) != 0 && !slices.Contains(v.OnlyShowIn, desktop) || v.Hidden || v.NoDisplay {
 			continue
 		}
@@ -49,6 +74,10 @@ func Query(query string) []common.Entry {
 
 			if e.Score > 0 || query == "" {
 				entries = append(entries, e)
+
+				resultsMutex.Lock()
+				results[qid][k] = v
+				resultsMutex.Unlock()
 			}
 		}
 
@@ -82,6 +111,10 @@ func Query(query string) []common.Entry {
 
 				if e.Score > 0 || query == "" {
 					entries = append(entries, e)
+
+					resultsMutex.Lock()
+					results[qid][k] = v
+					resultsMutex.Unlock()
 				}
 			}
 		}
@@ -118,4 +151,24 @@ func calcScore(q string, d *Data) (string, int, *[]int, int, bool) {
 	scoreRes = max(scoreRes-min(modifier*10, 50)-startRes, 10)
 
 	return match, scoreRes, posRes, startRes, true
+}
+
+func EntryToString(e common.Entry) string {
+	var start int
+	var field string
+
+	positions := []string{}
+
+	if e.Fuzzy != nil {
+		if e.Fuzzy.Pos != nil {
+			for _, num := range *e.Fuzzy.Pos {
+				positions = append(positions, strconv.Itoa(num))
+			}
+		}
+
+		start = e.Fuzzy.Start
+		field = e.Fuzzy.Field
+	}
+
+	return fmt.Sprintf("%s;%s;%s;%s;%s;%s;%d;%s", e.Provider, e.Identifier, e.Text, e.SubText, e.Icon, strings.Join(positions, ","), start, field)
 }

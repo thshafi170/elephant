@@ -18,7 +18,7 @@ func GenerateDoc() {
 	fmt.Println("## Provider Configuration")
 
 	for _, v := range providers.Providers {
-		v.PrintConfig()
+		v.PrintDoc()
 	}
 }
 

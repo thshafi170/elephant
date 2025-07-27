@@ -13,13 +13,14 @@ import (
 )
 
 type Provider struct {
-	Name        *string
-	NamePretty  *string
-	Load        func()
-	PrintConfig func()
-	Cleanup     func()
-	Activate    func(sid uint32, identifier, action string)
-	Query       func(text string) []common.Entry
+	Name          *string
+	NamePretty    *string
+	Load          func()
+	PrintDoc      func()
+	Cleanup       func(qid uint32)
+	EntryToString func(common.Entry) string
+	Activate      func(qid uint32, identifier, action string)
+	Query         func(qid uint32, text string) []common.Entry
 }
 
 var Providers map[string]Provider
@@ -64,6 +65,11 @@ func Load() {
 				slog.Error("providers", "load", err, "provider", path)
 			}
 
+			entryToStringFunc, err := p.Lookup("EntryToString")
+			if err != nil {
+				slog.Error("providers", "load", err, "provider", path)
+			}
+
 			activateFunc, err := p.Lookup("Activate")
 			if err != nil {
 				slog.Error("providers", "load", err, "provider", path)
@@ -85,13 +91,14 @@ func Load() {
 			}
 
 			provider := Provider{
-				Load:        loadFunc.(func()),
-				Name:        name.(*string),
-				Cleanup:     cleanupFunc.(func()),
-				Activate:    activateFunc.(func(sid uint32, identifier, action string)),
-				Query:       queryFunc.(func(string) []common.Entry),
-				NamePretty:  namePretty.(*string),
-				PrintConfig: printDocFunc.(func()),
+				Load:          loadFunc.(func()),
+				Name:          name.(*string),
+				EntryToString: entryToStringFunc.(func(common.Entry) string),
+				Cleanup:       cleanupFunc.(func(uint32)),
+				Activate:      activateFunc.(func(qid uint32, identifier, action string)),
+				Query:         queryFunc.(func(uint32, string) []common.Entry),
+				NamePretty:    namePretty.(*string),
+				PrintDoc:      printDocFunc.(func()),
 			}
 
 			Providers[*provider.Name] = provider
