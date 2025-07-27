@@ -12,11 +12,12 @@ import (
 var command = ""
 
 func init() {
-	app2unit, err := exec.LookPath(command)
+	app2unit, err := exec.LookPath("app2unit")
 	if err == nil && app2unit != "" {
-		xdgTerminalExec, err := exec.LookPath(command)
+		xdgTerminalExec, err := exec.LookPath("xdg-terminal-exec")
 		if err == nil && xdgTerminalExec != "" {
 			command = "app2unit"
+			slog.Info(Name, "command", command)
 			return
 		}
 	}
@@ -26,7 +27,8 @@ func init() {
 		cmd := exec.Command(uwsm, "check", "is-active")
 		err := cmd.Run()
 		if err == nil {
-			command = "uwsm start -- "
+			command = "uwsm"
+			slog.Info(Name, "command", command)
 		}
 	}
 
@@ -38,6 +40,9 @@ func init() {
 
 func Activate(sid uint32, identifier, action string) {
 	cmd := exec.Command(command, identifier)
+	if command == "uwsm" {
+		cmd = exec.Command("uwsm", "app", "-- ", identifier)
+	}
 
 	err := cmd.Start()
 	if err != nil {
