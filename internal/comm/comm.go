@@ -42,7 +42,7 @@ func StartListen() {
 
 		slog.Info("comm", "connection", "new")
 
-		conn.Write(fmt.Appendf(nil, "%d\n", providers.GetSID()))
+		conn.Write(fmt.Appendf(nil, "session:%d\n", providers.GetSID()))
 
 		go handle(conn)
 	}
