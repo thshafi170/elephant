@@ -6,6 +6,13 @@
 
 The project just started and is therefore highly wip.
 
+## Current Requirements
+
+```
+app2unit
+xdg-terminal-exec
+```
+
 ## Quick-Guide
 
 1. You need: `elephant`
@@ -25,7 +32,7 @@ Once you have this setup, you can start using `elephant`:
 How to query, example:
 
 1. Open socket connection with f.e. `nc -U /tmp/elephant.sock`
-2. You'll retrieve a messsage `session:number` => you gotta keep that in mind
+2. You'll retrieve a message `session:number` => you gotta keep that in mind
 3. You can now query with: `query;NUMBERFROMABOVE;firefox;desktopapplications`
 4. You'll retrieve a list of entries:
 
