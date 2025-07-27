@@ -28,13 +28,13 @@ func Load() {
 	Providers = make(map[string]Provider)
 	dir := filepath.Join(common.ConfigDir(), "providers")
 
-	conf := fastwalk.Config{
-		Follow: true,
+	if !common.FileExists(dir) {
+		slog.Error("elephant", "providers", "you don't have any providers installed")
+		os.Exit(1)
 	}
 
-	if _, err := os.Stat(dir); err != nil {
-		slog.Error("providers", "load", err)
-		os.Exit(1)
+	conf := fastwalk.Config{
+		Follow: true,
 	}
 
 	walkFn := func(path string, d fs.DirEntry, err error) error {
@@ -102,6 +102,11 @@ func Load() {
 
 	if err := fastwalk.Walk(&conf, dir, walkFn); err != nil {
 		slog.Error("providers", "load", err)
+		os.Exit(1)
+	}
+
+	if len(Providers) == 0 {
+		slog.Error("elephant", "providers", "you don't have any providers installed")
 		os.Exit(1)
 	}
 }
