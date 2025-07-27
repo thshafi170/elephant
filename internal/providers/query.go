@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net"
 	"slices"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -12,15 +13,20 @@ import (
 	"github.com/abenz1267/elephant/internal/common"
 )
 
-var sid atomic.Uint32
+var (
+	sid atomic.Uint32
+	qid atomic.Uint32
+)
 
 var (
 	sessions     map[uint32][]string
+	queries      map[uint32]uint32
 	sessionMutex sync.Mutex
 )
 
 func init() {
 	sessions = make(map[uint32][]string)
+	queries = make(map[uint32]uint32)
 }
 
 func GetSID() uint32 {
@@ -30,6 +36,13 @@ func GetSID() uint32 {
 }
 
 func Query(sid uint32, text string, providers []string, conn net.Conn) {
+	qid.Add(1)
+	qidd := qid.Load()
+
+	queries[sid] = qidd
+
+	conn.Write(fmt.Appendf(nil, "query:%d:%d\n", sid, qidd))
+
 	start := time.Now()
 	sessionMutex.Lock()
 	sessions[sid] = providers
@@ -68,7 +81,7 @@ func Query(sid uint32, text string, providers []string, conn net.Conn) {
 			return 1
 		}
 
-		return 0
+		return strings.Compare(a.Text, b.Text)
 	})
 
 	if len(entries) == 0 {
@@ -76,7 +89,12 @@ func Query(sid uint32, text string, providers []string, conn net.Conn) {
 	}
 
 	for _, v := range entries {
-		conn.Write(fmt.Appendln(nil, v.String()))
+		if qidd == queries[sid] {
+			conn.Write(fmt.Appendf(nil, "%d:%d:%s\n", sid, qidd, v.String()))
+		} else {
+			slog.Info("providers", "results", "abandoned", "query", text)
+			return
+		}
 	}
 
 	slog.Info("providers", "results", len(entries), "time", time.Since(start))
