@@ -2,14 +2,42 @@ package main
 
 import (
 	"log/slog"
+	"os"
 	"os/exec"
 )
 
 // uwsm app -- firefox-developer-edition.desktop:open-profile-manager
 // app2unit firefox-developer-edition.desktop:new-private-window
 
+var command = ""
+
+func init() {
+	app2unit, err := exec.LookPath(command)
+	if err == nil && app2unit != "" {
+		xdgTerminalExec, err := exec.LookPath(command)
+		if err == nil && xdgTerminalExec != "" {
+			command = "app2unit"
+			return
+		}
+	}
+
+	uwsm, err := exec.LookPath("uwsm")
+	if err == nil {
+		cmd := exec.Command(uwsm, "check", "is-active")
+		err := cmd.Run()
+		if err == nil {
+			command = "uwsm start -- "
+		}
+	}
+
+	if command == "" {
+		slog.Error(Name, "activation", "no execution command found. Needs app2unit or uwsm.")
+		os.Exit(1)
+	}
+}
+
 func Activate(sid uint32, identifier, action string) {
-	cmd := exec.Command("app2unit", identifier)
+	cmd := exec.Command(command, identifier)
 
 	err := cmd.Start()
 	if err != nil {
