@@ -30,13 +30,17 @@ func Query(query string) []common.Entry {
 				SubText:    v.GenericName,
 				Icon:       v.Icon,
 				Provider:   Name,
+				Fuzzy: common.FuzzyMatchInfo{
+					Field: "text",
+				},
 			}
 
 			var match string
-			match, e.Score, e.FuzzyPos, e.FuzzyPosStart = calcScore(query, &v.Data)
+			match, e.Score, e.Fuzzy.Pos, e.Fuzzy.Start = calcScore(query, &v.Data)
 
 			if match != e.Text {
 				e.SubText = match
+				e.Fuzzy.Field = "subtext"
 			}
 
 			if e.Score > 0 {
@@ -54,13 +58,17 @@ func Query(query string) []common.Entry {
 					SubText:    v.Name,
 					Icon:       a.Icon,
 					Provider:   Name,
+					Fuzzy: common.FuzzyMatchInfo{
+						Field: "text",
+					},
 				}
 
 				var match string
-				match, e.Score, e.FuzzyPos, e.FuzzyPosStart = calcScore(query, &a)
+				match, e.Score, e.Fuzzy.Pos, e.Fuzzy.Start = calcScore(query, &a)
 
 				if match != e.Text {
 					e.SubText = match
+					e.Fuzzy.Field = "subtext"
 				}
 
 				if e.Score > 0 {

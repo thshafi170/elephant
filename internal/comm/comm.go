@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/abenz1267/elephant/internal/providers"
 )
@@ -62,8 +61,6 @@ func handle(conn net.Conn) {
 
 		switch request[0] {
 		case ActionQuery:
-			start := time.Now()
-
 			if len(request) != 4 {
 				slog.Error("comm", "requestinvalid", message)
 				conn.Write(fmt.Appendf(nil, "error: invalid query request '%s'\n", message))
@@ -77,13 +74,7 @@ func handle(conn net.Conn) {
 				continue
 			}
 
-			entries := providers.Query(uint32(sid), request[2], strings.Fields(request[3]))
-
-			for _, v := range entries {
-				conn.Write(fmt.Appendf(nil, "%d:%s\n", sid, v))
-			}
-
-			slog.Info("comm", "entries", len(entries), "time", time.Since(start))
+			providers.Query(uint32(sid), request[2], strings.Fields(request[3]), conn)
 		case ActionCleanup:
 			if len(request) != 2 {
 				slog.Error("comm", "requestinvalid", message)

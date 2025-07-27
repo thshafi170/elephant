@@ -3,6 +3,7 @@ package providers
 import (
 	"fmt"
 	"log/slog"
+	"net"
 	"slices"
 	"sync"
 	"sync/atomic"
@@ -28,7 +29,7 @@ func GetSID() uint32 {
 	return sid.Load()
 }
 
-func Query(sid uint32, text string, providers []string) []string {
+func Query(sid uint32, text string, providers []string, conn net.Conn) {
 	start := time.Now()
 	sessionMutex.Lock()
 	sessions[sid] = providers
@@ -70,15 +71,11 @@ func Query(sid uint32, text string, providers []string) []string {
 		return 0
 	})
 
-	result := []string{}
-
 	for _, v := range entries {
-		result = append(result, fmt.Sprintf("%s;%s;%s;%s;%s", v.Identifier, v.Text, v.SubText, v.Icon, v.Provider))
+		conn.Write(fmt.Appendln(nil, v.String()))
 	}
 
-	slog.Info("providers", "results", len(result), "time", time.Since(start))
-
-	return result
+	slog.Info("providers", "results", len(entries), "time", time.Since(start))
 }
 
 func Activate(sid uint32, provider, identifier, action string) {
