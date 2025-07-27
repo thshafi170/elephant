@@ -22,25 +22,29 @@ func Query(query string) []common.Entry {
 		}
 
 		// add generic entry
-		if config.ShowActions && config.ShowGeneric || !config.ShowActions {
-
+		if config.ShowActions && config.ShowGeneric || !config.ShowActions || (config.ShowActions && len(v.Actions) == 0) {
 			e := common.Entry{
 				Identifier: k,
 				Text:       v.Name,
 				SubText:    v.GenericName,
 				Icon:       v.Icon,
 				Provider:   Name,
-				Fuzzy: common.FuzzyMatchInfo{
-					Field: "text",
-				},
 			}
 
 			var match string
-			match, e.Score, e.Fuzzy.Pos, e.Fuzzy.Start = calcScore(query, &v.Data)
+			var ok bool
 
-			if match != e.Text {
-				e.SubText = match
-				e.Fuzzy.Field = "subtext"
+			if query != "" {
+				e.Fuzzy = &common.FuzzyMatchInfo{
+					Field: "text",
+				}
+
+				match, e.Score, e.Fuzzy.Pos, e.Fuzzy.Start, ok = calcScore(query, &v.Data)
+
+				if ok && match != e.Text {
+					e.SubText = match
+					e.Fuzzy.Field = "subtext"
+				}
 			}
 
 			if e.Score > 0 || query == "" {
@@ -58,17 +62,22 @@ func Query(query string) []common.Entry {
 					SubText:    v.Name,
 					Icon:       a.Icon,
 					Provider:   Name,
-					Fuzzy: common.FuzzyMatchInfo{
-						Field: "text",
-					},
 				}
 
 				var match string
-				match, e.Score, e.Fuzzy.Pos, e.Fuzzy.Start = calcScore(query, &a)
+				var ok bool
 
-				if match != e.Text {
-					e.SubText = match
-					e.Fuzzy.Field = "subtext"
+				if query != "" {
+					e.Fuzzy = &common.FuzzyMatchInfo{
+						Field: "text",
+					}
+
+					match, e.Score, e.Fuzzy.Pos, e.Fuzzy.Start, ok = calcScore(query, &a)
+
+					if ok && match != e.Text {
+						e.SubText = match
+						e.Fuzzy.Field = "subtext"
+					}
 				}
 
 				if e.Score > 0 || query == "" {
@@ -83,7 +92,7 @@ func Query(query string) []common.Entry {
 	return entries
 }
 
-func calcScore(q string, d *Data) (string, int, *[]int, int) {
+func calcScore(q string, d *Data) (string, int, *[]int, int, bool) {
 	var scoreRes int
 	var posRes *[]int
 	var startRes int
@@ -102,7 +111,11 @@ func calcScore(q string, d *Data) (string, int, *[]int, int) {
 		}
 	}
 
-	scoreRes = scoreRes - max((modifier*10), 50)
+	if scoreRes == 0 {
+		return "", 0, nil, 0, false
+	}
 
-	return match, scoreRes, posRes, startRes
+	scoreRes = max(scoreRes-min(modifier*10, 50)-startRes, 10)
+
+	return match, scoreRes, posRes, startRes, true
 }

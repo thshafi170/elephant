@@ -13,7 +13,7 @@ type Entry struct {
 	Icon       string
 	Provider   string
 	Score      int
-	Fuzzy      FuzzyMatchInfo
+	Fuzzy      *FuzzyMatchInfo
 }
 
 type FuzzyMatchInfo struct {
@@ -23,11 +23,21 @@ type FuzzyMatchInfo struct {
 }
 
 func (e Entry) String() string {
-	positions := make([]string, len(*e.Fuzzy.Pos))
+	var start int
+	var field string
 
-	for i, num := range *e.Fuzzy.Pos {
-		positions[i] = strconv.Itoa(num)
+	positions := []string{}
+
+	if e.Fuzzy != nil {
+		if e.Fuzzy.Pos != nil {
+			for _, num := range *e.Fuzzy.Pos {
+				positions = append(positions, strconv.Itoa(num))
+			}
+		}
+
+		start = e.Fuzzy.Start
+		field = e.Fuzzy.Field
 	}
 
-	return fmt.Sprintf("%s;%s;%s;%s;%s;%s;%d;%s", e.Identifier, e.Text, e.SubText, e.Icon, e.Provider, strings.Join(positions, ","), e.Fuzzy.Start, e.Fuzzy.Field)
+	return fmt.Sprintf("%s;%s;%s;%s;%s;%s;%d;%s", e.Identifier, e.Text, e.SubText, e.Icon, e.Provider, strings.Join(positions, ","), start, field)
 }
