@@ -19,19 +19,11 @@ var (
 	queries        map[uint32]map[string]uint32
 	queryProviders map[uint32][]string
 	queryMutex     sync.Mutex
-	CleanupChan    chan uint32
 )
 
 func init() {
 	queries = make(map[uint32]map[string]uint32)
 	queryProviders = make(map[uint32][]string)
-	CleanupChan = make(chan uint32)
-
-	go func() {
-		for qid := range <-CleanupChan {
-			Cleanup(qid)
-		}
-	}()
 }
 
 func Query(sid uint32, providers []string, text string, conn net.Conn) {

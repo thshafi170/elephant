@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/abenz1267/elephant/internal/common"
-	"github.com/abenz1267/elephant/internal/providers"
 )
 
 var (
@@ -53,7 +52,7 @@ func Activate(qid uint32, identifier, action string) {
 	// TODO: uwsm app => just for testing purposes atm
 	// TODO: i don't think we need to shell out here
 	case ActionOpen:
-		cmd := exec.Command("sh", "-c", fmt.Sprintf("uwsm app -- xdg-open '%s'", paths[i]))
+		cmd := exec.Command("sh", "-c", common.WrapWithPrefix(fmt.Sprintf("xdg-open '%s'", paths[i])))
 		cmd.SysProcAttr = &syscall.SysProcAttr{
 			Setsid: true,
 		}
@@ -66,8 +65,6 @@ func Activate(qid uint32, identifier, action string) {
 		go func() {
 			cmd.Wait()
 		}()
-
-		providers.CleanupChan <- qid
 	default:
 		slog.Error(Name, "nosuchaction", action)
 	}
