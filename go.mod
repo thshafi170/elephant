@@ -18,6 +18,7 @@ require (
 
 require (
 	github.com/charlievieth/fastwalk v1.0.12 // indirect
+	github.com/joho/godotenv v1.5.1
 	github.com/junegunn/fzf v0.65.0
 	github.com/knadh/koanf/parsers/toml/v2 v2.2.0
 	github.com/knadh/koanf/providers/file v1.2.0

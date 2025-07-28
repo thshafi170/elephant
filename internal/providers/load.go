@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 	"plugin"
+	"sync"
+	"time"
 
 	"github.com/abenz1267/elephant/internal/common"
 	"github.com/charlievieth/fastwalk"
@@ -26,11 +28,12 @@ type Provider struct {
 var Providers map[string]Provider
 
 func Load() {
+	start := time.Now()
 	Providers = make(map[string]Provider)
 	dir := filepath.Join(common.ConfigDir(), "providers")
 
 	if !common.FileExists(dir) {
-		slog.Error("elephant", "providers", "you don't have any providers installed")
+		slog.Error("providers", "load", "you don't have any providers installed")
 		os.Exit(1)
 	}
 
@@ -113,13 +116,26 @@ func Load() {
 	}
 
 	if len(Providers) == 0 {
-		slog.Error("elephant", "providers", "you don't have any providers installed")
+		slog.Error("providers", "load", "you don't have any providers installed")
 		os.Exit(1)
 	}
+
+	slog.Info("providers", "loaded", len(Providers), "time", time.Since(start))
 }
 
 func Setup() {
+	start := time.Now()
+	var wg sync.WaitGroup
+	wg.Add(len(Providers))
+
 	for _, v := range Providers {
-		v.Load()
+		go func(wg *sync.WaitGroup, p Provider) {
+			defer wg.Done()
+			p.Load()
+		}(&wg, v)
 	}
+
+	wg.Wait()
+
+	slog.Info("providers", "setup", time.Since(start))
 }

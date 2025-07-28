@@ -5,12 +5,14 @@ import (
 	"log"
 	"log/slog"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/abenz1267/elephant/internal/comm"
 	"github.com/abenz1267/elephant/internal/common"
 	"github.com/abenz1267/elephant/internal/providers"
 	"github.com/abenz1267/elephant/internal/util"
+	"github.com/joho/godotenv"
 	"github.com/urfave/cli/v3"
 )
 
@@ -50,6 +52,7 @@ func main() {
 			start := time.Now()
 			providers.Load()
 			providers.Setup()
+			loadLocalEnv()
 			slog.Info("elephant", "startup", time.Since(start))
 			comm.StartListen()
 
@@ -59,5 +62,19 @@ func main() {
 
 	if err := cmd.Run(context.Background(), os.Args); err != nil {
 		log.Fatal(err)
+	}
+}
+
+func loadLocalEnv() {
+	envFile := filepath.Join(common.ConfigDir(), ".env")
+
+	if common.FileExists(envFile) {
+		err := godotenv.Load(envFile)
+		if err != nil {
+			slog.Error("elephant", "localenv", err)
+			return
+		}
+
+		slog.Info("elephant", "localenv", "loaded")
 	}
 }
