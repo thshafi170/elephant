@@ -135,7 +135,7 @@ func Activate(sid, qid uint32, provider, identifier, action string) {
 }
 
 func Cleanup(qid uint32) {
-	slog.Info("providers", "cleanupsession", qid)
+	slog.Info("providers", "cleanup", qid)
 
 	for _, v := range queryProviders[qid] {
 		Providers[v].Cleanup(qid)

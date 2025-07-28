@@ -47,7 +47,7 @@ func Query(qid uint32, query string) []common.Entry {
 		}
 
 		// add generic entry
-		if config.ShowActions && config.ShowGeneric || !config.ShowActions || (config.ShowActions && len(v.Actions) == 0) {
+		if config.ShowActions && config.ShowGeneric || !config.ShowActions || (config.ShowActions && len(v.Actions) == 0) || query == "" {
 			e := common.Entry{
 				Identifier: k,
 				Text:       v.Name,
@@ -82,7 +82,7 @@ func Query(qid uint32, query string) []common.Entry {
 		}
 
 		// add actions
-		if config.ShowActions {
+		if (query == "" && config.ShowActionsWithoutQuery) || (query != "" && config.ShowActions) {
 			for _, a := range v.Actions {
 
 				e := common.Entry{

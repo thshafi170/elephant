@@ -9,7 +9,6 @@ type Config struct {
 	Locale                  string `koanf:"locale" desc:"to overwrite systems locale" default:""`
 	ShowActions             bool   `koanf:"show_actions" desc:"include application actions, f.e. 'New Private Window' for Firefox" default:"false"`
 	ShowGeneric             bool   `koanf:"show_generic" desc:"include generic info when show_actions is true" default:"false"`
-	PrioritizeNew           bool   `koanf:"prioritize_new" desc:"prioritize freshly installed applications" default:"false"`
 	ShowActionsWithoutQuery bool   `koanf:"show_actions_without_query" desc:"show application actions, if the search query is empty" default:"false"`
 }
 
@@ -20,7 +19,6 @@ func loadConfig() {
 		Config:                  common.Config{},
 		ShowActions:             false,
 		ShowGeneric:             false,
-		PrioritizeNew:           false,
 		ShowActionsWithoutQuery: false,
 	}
 
