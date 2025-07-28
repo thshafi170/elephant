@@ -32,19 +32,18 @@ Once you have this setup, you can start using `elephant`:
 How to query, example:
 
 1. Open socket connection with f.e. `nc -U /tmp/elephant.sock`
-2. You'll retrieve a message `session:number` => you gotta keep that in mind
-3. You can now query with: `query;NUMBERFROMABOVE;firefox;desktopapplications`
-4. You'll retrieve a `queryid`: `query:SESSIONID:QUERYID`
-5. You'll retrieve a list of entries:
+2. You can now query with: `query;desktopapplications;firefox`
+3. You'll retrieve a `qid;<number>`
+4. You'll retrieve a list of entries:
 
 ```
-1:1:/usr/share/applications/firefox-developer-edition.desktop;Firefox Developer Edition;Web Browser;firefox-developer-edition;desktopapplications;6,5,4,3,2,1,0;0;text
+1;desktopapplications;/usr/share/applications/firefox-developer-edition.desktop;Firefox Developer Edition;Web Browser;firefox-developer-edition;6,5,4,3,2,1,0;0;text
 ```
 
 To break this down:
 
 ```
-SESSIONID:QUERYID:IDENTIFIER;TEXT;SUBTEXT;ICON;PROVIDER;POSITIONS OF FUZZY MATCH;STARTING POSITION OF FUZZY MATCH;FUZZY MATCH FIELDNAME
+QID;PROVIDER;IDENTIFIER;TEXT;SUBTEXT;ICON;POSITIONS OF FUZZY MATCH;STARTING POSITION OF FUZZY MATCH;FUZZY MATCH FIELDNAME
 ```
 
 5. You can activate an item like this:
@@ -56,7 +55,7 @@ activate;1;desktopapplications;firefox-developer-edition.desktop;
 To break this down:
 
 ```
-COMMAND;SESSIONID;PROVIDER;IDENTIFIER;ACTION
+COMMAND;QID;PROVIDER;IDENTIFIER;ACTION
 ```
 
 If there's no action, you'll still need a trailing `;`.
