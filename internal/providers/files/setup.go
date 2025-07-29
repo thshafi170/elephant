@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/abenz1267/elephant/internal/common"
+	"github.com/abenz1267/elephant/internal/util"
 )
 
 var (
@@ -35,7 +36,12 @@ func init() {
 	loadConfig()
 }
 
-func PrintDoc() {}
+func PrintDoc() {
+	fmt.Printf("### %s\n", Name)
+	fmt.Println("Search files and folders.")
+	fmt.Println()
+	util.PrintConfig(Config{})
+}
 
 func Cleanup(qid uint32) {
 	slog.Info(Name, "cleanup", qid)
