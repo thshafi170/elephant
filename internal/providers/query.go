@@ -88,6 +88,8 @@ func Query(sid uint32, providers []string, text string, conn net.Conn) {
 	var wg sync.WaitGroup
 	wg.Add(len(providers))
 
+	timestampedqueries.data[currentQID] = time.Now()
+
 	entries := []common.Entry{}
 
 	for _, v := range providers {
