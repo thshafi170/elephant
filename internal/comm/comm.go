@@ -103,6 +103,7 @@ func handle(conn net.Conn, sid uint32) {
 			}
 
 			providers.Activate(sid, uint32(qid), request[2], request[3], request[4])
+			conn.Write(fmt.Appendf(nil, "qid;%d;done\n", qid))
 		default:
 			slog.Error("comm", "requestinvalid", request[0])
 			conn.Write(fmt.Appendf(nil, "error: invalid action '%s'\n", request[0]))
