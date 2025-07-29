@@ -9,7 +9,7 @@ import (
 
 var runPrefix = ""
 
-func init() {
+func InitRunPrefix() {
 	app2unit, err := exec.LookPath("app2unit")
 	if err == nil && app2unit != "" {
 		xdgTerminalExec, err := exec.LookPath("xdg-terminal-exec")

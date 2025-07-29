@@ -18,6 +18,7 @@ import (
 
 func main() {
 	var config string
+	var socketrequest string
 
 	cmd := &cli.Command{
 		Name:                   "Elephant",
@@ -31,6 +32,21 @@ func main() {
 				Action: func(ctx context.Context, cmd *cli.Command) error {
 					providers.Load()
 					util.GenerateDoc()
+					return nil
+				},
+			},
+			{
+				Name:    "send",
+				Aliases: []string{"s"},
+				Usage:   "sends a request to the elephant service",
+				Arguments: []cli.Argument{
+					&cli.StringArg{
+						Name:        "request",
+						Destination: &socketrequest,
+					},
+				},
+				Action: func(ctx context.Context, cmd *cli.Command) error {
+					comm.Send(socketrequest)
 					return nil
 				},
 			},
@@ -50,10 +66,15 @@ func main() {
 		},
 		Action: func(context.Context, *cli.Command) error {
 			start := time.Now()
+			loadLocalEnv()
+
+			common.InitRunPrefix()
+
 			providers.Load()
 			providers.Setup()
-			loadLocalEnv()
+
 			slog.Info("elephant", "startup", time.Since(start))
+
 			comm.StartListen()
 
 			return nil
