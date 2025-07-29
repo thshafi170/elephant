@@ -1,0 +1,141 @@
+name: Build Elephant
+
+on:
+  push:
+    branches: [ main, develop ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: write
+
+env:
+  GO_VERSION: "1.24"
+  PROJECT_NAME: "elephant"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Install cross-compilation tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gcc-aarch64-linux-gnu
+
+    - name: Create build directory
+      run: mkdir -p build
+
+    - name: Download Go modules
+      run: go mod download
+
+    - name: Build elephant for linux/amd64
+      run: |
+        echo "Building elephant for linux/amd64..."
+        GOOS=linux GOARCH=amd64 CGO_ENABLED=1 go build -o build/elephant-linux-amd64 ./cmd/elephant.go
+
+    - name: Build elephant for linux/arm64
+      run: |
+        echo "Building elephant for linux/arm64..."
+        GOOS=linux GOARCH=arm64 CGO_ENABLED=1 CC=aarch64-linux-gnu-gcc go build -o build/elephant-linux-arm64 ./cmd/elephant.go
+
+    - name: Build desktopapplications plugin for linux/amd64
+      run: |
+        echo "Building desktopapplications plugin for linux/amd64..."
+        GOOS=linux GOARCH=amd64 CGO_ENABLED=1 go build -buildmode=plugin -o build/desktopapplications-linux-amd64.so ./internal/providers/desktopapplications
+
+    - name: Build desktopapplications plugin for linux/arm64
+      run: |
+        echo "Building desktopapplications plugin for linux/arm64..."
+        GOOS=linux GOARCH=arm64 CGO_ENABLED=1 CC=aarch64-linux-gnu-gcc go build -buildmode=plugin -o build/desktopapplications-linux-arm64.so ./internal/providers/desktopapplications
+
+    - name: Build files plugin for linux/amd64
+      run: |
+        echo "Building files plugin for linux/amd64..."
+        GOOS=linux GOARCH=amd64 CGO_ENABLED=1 go build -buildmode=plugin -o build/files-linux-amd64.so ./internal/providers/files
+
+    - name: Build files plugin for linux/arm64
+      run: |
+        echo "Building files plugin for linux/arm64..."
+        GOOS=linux GOARCH=arm64 CGO_ENABLED=1 CC=aarch64-linux-gnu-gcc go build -buildmode=plugin -o build/files-linux-arm64.so ./internal/providers/files
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-artifacts
+        path: build/
+        retention-days: 7
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Get version
+      id: version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: build-artifacts
+        path: build/
+
+    - name: Create archives
+      run: |
+        echo "Creating archives..."
+        cd build
+
+        # Archive main elephant binaries
+        tar -czf elephant-linux-amd64.tar.gz elephant-linux-amd64
+        tar -czf elephant-linux-arm64.tar.gz elephant-linux-arm64
+
+        # Archive desktopapplications plugin
+        tar -czf desktopapplications-linux-amd64.tar.gz desktopapplications-linux-amd64.so
+        tar -czf desktopapplications-linux-arm64.tar.gz desktopapplications-linux-arm64.so
+
+        # Archive files plugin
+        tar -czf files-linux-amd64.tar.gz files-linux-amd64.so
+        tar -czf files-linux-arm64.tar.gz files-linux-arm64.so
+
+        echo "Build completed successfully!"
+        echo "Created archives:"
+        ls -la *.tar.gz
+
+    - name: Generate changelog
+      id: changelog
+      uses: mikepenz/release-changelog-builder-action@v4
+      with:
+        configuration: ".github/changelog_config.json"
+        ignorePreReleases: false
+        fetchViaCommits: true
+        commitMode: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ steps.version.outputs.VERSION }}
+        name: Release ${{ steps.version.outputs.VERSION }}
+        body: ${{ steps.changelog.outputs.changelog }}
+        draft: false
+        prerelease: false
+        files: build/*.tar.gz
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

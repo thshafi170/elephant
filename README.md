@@ -6,12 +6,10 @@
 
 The project just started and is therefore highly wip.
 
-## Current Requirements
+## Current Providers
 
-```
-app2unit
-xdg-terminal-exec
-```
+- `desktopapplications`
+- `files`
 
 ## Quick-Guide
 
