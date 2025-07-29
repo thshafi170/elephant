@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	_ "embed"
+	"fmt"
 	"log"
 	"log/slog"
 	"os"
@@ -16,6 +18,9 @@ import (
 	"github.com/urfave/cli/v3"
 )
 
+//go:embed version.txt
+var version string
+
 func main() {
 	var config string
 	var socketrequest string
@@ -26,6 +31,15 @@ func main() {
 		Usage:                  "Data provider and executor",
 		UseShortOptionHandling: true,
 		Commands: []*cli.Command{
+			{
+				Name:    "version",
+				Aliases: []string{"v"},
+				Usage:   "prints the version",
+				Action: func(ctx context.Context, cmd *cli.Command) error {
+					fmt.Println(version)
+					return nil
+				},
+			},
 			{
 				Name:    "generatedoc",
 				Aliases: []string{"d"},
