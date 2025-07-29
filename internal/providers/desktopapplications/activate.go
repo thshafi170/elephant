@@ -8,7 +8,7 @@ import (
 )
 
 func Activate(qid uint32, identifier, action string) {
-	cmd := exec.Command("sh", "-c", common.WrapWithPrefix(identifier))
+	cmd := exec.Command("sh", "-c", common.WrapWithPrefix(config.LaunchPrefix, identifier))
 
 	err := cmd.Start()
 	if err != nil {

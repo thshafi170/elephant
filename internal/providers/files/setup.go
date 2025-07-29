@@ -31,6 +31,10 @@ const (
 	ActionOpenDir = "opendir"
 )
 
+func init() {
+	loadConfig()
+}
+
 func PrintDoc() {}
 
 func Cleanup(qid uint32) {
@@ -49,10 +53,8 @@ func Activate(qid uint32, identifier, action string) {
 
 	switch action {
 	// TODO: find out if it needs to be opened in a terminal, see Walker
-	// TODO: uwsm app => just for testing purposes atm
-	// TODO: i don't think we need to shell out here
 	case ActionOpen:
-		cmd := exec.Command("sh", "-c", common.WrapWithPrefix(fmt.Sprintf("xdg-open '%s'", paths[i])))
+		cmd := exec.Command("sh", "-c", common.WrapWithPrefix(config.LaunchPrefix, fmt.Sprintf("xdg-open '%s'", paths[i])))
 		cmd.SysProcAttr = &syscall.SysProcAttr{
 			Setsid: true,
 		}

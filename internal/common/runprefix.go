@@ -36,6 +36,16 @@ func init() {
 	}
 }
 
-func WrapWithPrefix(in string) string {
-	return fmt.Sprintf("%s %s", runPrefix, in)
+func WrapWithPrefix(override, in string) string {
+	if override == "CLEAR" {
+		return in
+	}
+
+	prefix := override
+
+	if prefix == "" {
+		prefix = runPrefix
+	}
+
+	return fmt.Sprintf("%s %s", prefix, in)
 }

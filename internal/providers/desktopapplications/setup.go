@@ -24,10 +24,12 @@ var (
 	NamePretty = "Desktop Applications"
 )
 
+func init() {
+	loadConfig()
+}
+
 // TODO: watch folders for changes
 func Load() {
-	loadConfig()
-
 	start := time.Now()
 	files = make(map[string]*DesktopFile)
 
