@@ -13,12 +13,13 @@ import (
 	"time"
 
 	"github.com/abenz1267/elephant/internal/common"
+	"github.com/abenz1267/elephant/internal/providers"
 	"github.com/abenz1267/elephant/internal/util"
 )
 
 var (
 	paths        []string
-	results      map[uint32][]string
+	results      providers.QueryData[[]string]
 	resultsMutex sync.Mutex
 )
 
@@ -34,6 +35,7 @@ const (
 
 func init() {
 	loadConfig()
+	results = providers.QueryData[[]string]{}
 }
 
 func PrintDoc() {
@@ -45,9 +47,9 @@ func PrintDoc() {
 
 func Cleanup(qid uint32) {
 	slog.Info(Name, "cleanup", qid)
-	resultsMutex.Lock()
-	delete(results, qid)
-	resultsMutex.Unlock()
+	// resultsMutex.Lock()
+	// delete(results, qid)
+	// resultsMutex.Unlock()
 }
 
 func Activate(qid uint32, identifier, action string) {
@@ -78,25 +80,25 @@ func Activate(qid uint32, identifier, action string) {
 	}
 }
 
-func Query(qid uint32, text string) []common.Entry {
+func init() {
+}
+
+func Query(qid uint32, iid uint32, text string) []common.Entry {
 	start := time.Now()
 	entries := []common.Entry{}
 
-	var toMatch []string
+	var toFilter []string
 
-	v, ok := results[qid]
+	data, ok := results.GetData(qid, iid, []string{})
 	if ok {
-		toMatch = v
-		slog.Info(Name, "query", "resuming", "files", len(toMatch))
+		toFilter = data
 	} else {
-		toMatch = paths
+		toFilter = paths
 	}
 
-	resultsMutex.Lock()
-	results[qid] = []string{}
-	resultsMutex.Unlock()
+	slog.Info(Name, "queryingfiles", len(toFilter))
 
-	for k, v := range toMatch {
+	for k, v := range toFilter {
 		common.FuzzyScore(text, v)
 
 		i := strconv.Itoa(k)
@@ -125,9 +127,9 @@ func Query(qid uint32, text string) []common.Entry {
 		}
 
 		if e.Score > 0 || text == "" {
-			resultsMutex.Lock()
-			results[qid] = append(results[qid], v)
-			resultsMutex.Unlock()
+			results.Queries[qid].Lock()
+			results.Queries[qid].Results[iid] = append(results.Queries[qid].Results[iid], v)
+			results.Queries[qid].Unlock()
 
 			entries = append(entries, e)
 		}
@@ -138,7 +140,6 @@ func Query(qid uint32, text string) []common.Entry {
 }
 
 func Load() {
-	results = make(map[uint32][]string)
 	start := time.Now()
 	paths = []string{}
 	home, _ := os.UserHomeDir()

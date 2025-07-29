@@ -22,7 +22,7 @@ type Provider struct {
 	Cleanup       func(qid uint32)
 	EntryToString func(common.Entry) string
 	Activate      func(qid uint32, identifier, action string)
-	Query         func(qid uint32, text string) []common.Entry
+	Query         func(qid uint32, iid uint32, text string) []common.Entry
 }
 
 var Providers map[string]Provider
@@ -99,7 +99,7 @@ func Load() {
 				EntryToString: entryToStringFunc.(func(common.Entry) string),
 				Cleanup:       cleanupFunc.(func(uint32)),
 				Activate:      activateFunc.(func(qid uint32, identifier, action string)),
-				Query:         queryFunc.(func(uint32, string) []common.Entry),
+				Query:         queryFunc.(func(uint32, uint32, string) []common.Entry),
 				NamePretty:    namePretty.(*string),
 				PrintDoc:      printDocFunc.(func()),
 			}

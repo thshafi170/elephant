@@ -72,7 +72,7 @@ func handle(conn net.Conn, sid uint32) {
 				continue
 			}
 
-			providers.Query(sid, strings.Fields(request[1]), request[2], conn)
+			go providers.Query(sid, strings.Fields(request[1]), request[2], conn)
 		case ActionCleanup:
 			if len(request) != 2 {
 				slog.Error("comm", "requestinvalid", message)

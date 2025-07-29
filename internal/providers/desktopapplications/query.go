@@ -7,43 +7,35 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/abenz1267/elephant/internal/common"
+	"github.com/abenz1267/elephant/internal/providers"
 )
 
-var (
-	results      map[uint32]map[string]*DesktopFile
-	resultsMutex sync.Mutex
-)
+var results providers.QueryData[map[string]*DesktopFile]
 
 func init() {
-	results = make(map[uint32]map[string]*DesktopFile)
+	results = providers.QueryData[map[string]*DesktopFile]{}
 }
 
-func Query(qid uint32, query string) []common.Entry {
+func Query(qid uint32, iid uint32, query string) []common.Entry {
 	start := time.Now()
 	desktop := os.Getenv("XDG_CURRENT_DESKTOP")
 	entries := []common.Entry{}
 
-	var toMatch map[string]*DesktopFile
+	var toFilter map[string]*DesktopFile
 
-	v, ok := results[qid]
+	data, ok := results.GetData(qid, iid, make(map[string]*DesktopFile))
 	if ok {
-		toMatch = v
-		slog.Info(Name, "query", "resuming", "files", len(toMatch))
+		toFilter = data
 	} else {
-    filesMu.RLock()
-		toMatch = files
-    filesMu.RUnlock()
+		toFilter = files
 	}
 
-	resultsMutex.Lock()
-	results[qid] = make(map[string]*DesktopFile)
-	resultsMutex.Unlock()
+	slog.Info(Name, "queryingfiles", len(toFilter))
 
-	for k, v := range toMatch {
+	for k, v := range toFilter {
 		if len(v.NotShowIn) != 0 && slices.Contains(v.NotShowIn, desktop) || len(v.OnlyShowIn) != 0 && !slices.Contains(v.OnlyShowIn, desktop) || v.Hidden || v.NoDisplay {
 			continue
 		}
@@ -77,9 +69,7 @@ func Query(qid uint32, query string) []common.Entry {
 			if e.Score > 0 || query == "" {
 				entries = append(entries, e)
 
-				resultsMutex.Lock()
-				results[qid][k] = v
-				resultsMutex.Unlock()
+				results.Queries[qid].Results[iid][k] = v
 			}
 		}
 
@@ -114,9 +104,7 @@ func Query(qid uint32, query string) []common.Entry {
 				if e.Score > 0 || query == "" {
 					entries = append(entries, e)
 
-					resultsMutex.Lock()
-					results[qid][k] = v
-					resultsMutex.Unlock()
+					results.Queries[qid].Results[iid][k] = v
 				}
 			}
 		}

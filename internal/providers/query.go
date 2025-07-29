@@ -13,7 +13,7 @@ import (
 	"github.com/abenz1267/elephant/internal/common"
 )
 
-type QueryData struct {
+type queryData struct {
 	Query     string
 	Iteration atomic.Uint32
 	sync.Mutex
@@ -22,13 +22,13 @@ type QueryData struct {
 var (
 	qid atomic.Uint32
 	// sessionid => prefix => id
-	queries        map[uint32]map[uint32]*QueryData
+	queries        map[uint32]map[uint32]*queryData
 	queryProviders map[uint32][]string
 	queryMutex     sync.Mutex
 )
 
 func init() {
-	queries = make(map[uint32]map[uint32]*QueryData)
+	queries = make(map[uint32]map[uint32]*queryData)
 	queryProviders = make(map[uint32][]string)
 }
 
@@ -37,7 +37,7 @@ func Query(sid uint32, providers []string, text string, conn net.Conn) {
 
 	queryMutex.Lock()
 	if _, ok := queries[sid]; !ok {
-		queries[sid] = make(map[uint32]*QueryData)
+		queries[sid] = make(map[uint32]*queryData)
 	}
 	queryMutex.Unlock()
 
@@ -45,10 +45,10 @@ func Query(sid uint32, providers []string, text string, conn net.Conn) {
 	var currentIteration uint32
 
 	if text != "" {
-		lastLength := 1000
+		lastLength := 0
 
 		for k, v := range queries[sid] {
-			if strings.HasPrefix(text, v.Query) && len(v.Query) < lastLength {
+			if strings.HasPrefix(text, v.Query) && len(v.Query) > lastLength {
 				currentQID = k
 				lastLength = len(v.Query)
 				v.Iteration.Add(1)
@@ -62,7 +62,7 @@ func Query(sid uint32, providers []string, text string, conn net.Conn) {
 
 			queryMutex.Lock()
 			queryProviders[currentQID] = providers
-			data := &QueryData{
+			data := &queryData{
 				Query: text,
 			}
 			data.Iteration.Add(1)
@@ -94,7 +94,7 @@ func Query(sid uint32, providers []string, text string, conn net.Conn) {
 		go func(text string, wg *sync.WaitGroup) {
 			defer wg.Done()
 			if p, ok := Providers[v]; ok {
-				res := p.Query(currentQID, text)
+				res := p.Query(currentQID, currentIteration, text)
 
 				mut.Lock()
 				entries = append(entries, res...)
