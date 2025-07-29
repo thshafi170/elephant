@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
@@ -26,12 +27,16 @@ func Activate(qid uint32, identifier, action string) {
 	}
 
 	switch action {
-	// TODO: find out if it needs to be opened in a terminal, see Walker
-	case ActionOpen:
+	case ActionOpen, ActionOpenDir:
+		path := paths[i]
 
-		run := common.WrapWithPrefix(config.LaunchPrefix, fmt.Sprintf("xdg-open '%s'", paths[i]))
+		if action == ActionOpenDir {
+			path = filepath.Dir(path)
+		}
 
-		if forceTerminalForFile(paths[i]) {
+		run := common.WrapWithPrefix(config.LaunchPrefix, fmt.Sprintf("xdg-open '%s'", path))
+
+		if forceTerminalForFile(path) {
 			run = wrapWithTerminal(run)
 		}
 
