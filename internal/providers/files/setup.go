@@ -3,39 +3,41 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io/fs"
 	"log/slog"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/abenz1267/elephant/internal/common"
 	"github.com/abenz1267/elephant/internal/providers"
 	"github.com/abenz1267/elephant/internal/util"
+	"github.com/adrg/xdg"
+	"github.com/charlievieth/fastwalk"
 )
 
 var (
 	paths        []string
 	results      providers.QueryData[[]string]
 	resultsMutex sync.Mutex
+	terminal     string
 )
+
+var terminalApps map[string]struct{}
 
 var (
 	Name       = "files"
 	NamePretty = "Files"
 )
 
-const (
-	ActionOpen    = "open"
-	ActionOpenDir = "opendir"
-)
-
 func init() {
 	loadConfig()
 	results = providers.QueryData[[]string]{}
+	terminalApps = map[string]struct{}{}
 }
 
 func PrintDoc() {
@@ -47,100 +49,46 @@ func PrintDoc() {
 
 func Cleanup(qid uint32) {
 	slog.Info(Name, "cleanup", qid)
-	// resultsMutex.Lock()
-	// delete(results, qid)
-	// resultsMutex.Unlock()
+	resultsMutex.Lock()
+	delete(results.Queries, qid)
+	resultsMutex.Unlock()
 }
 
-func Activate(qid uint32, identifier, action string) {
-	i, err := strconv.Atoi(identifier)
-	if err != nil {
-		slog.Error(Name, "activate", err)
-		return
+func findTerminalApps() {
+	conf := fastwalk.Config{
+		Follow: true,
 	}
 
-	switch action {
-	// TODO: find out if it needs to be opened in a terminal, see Walker
-	case ActionOpen:
-		cmd := exec.Command("sh", "-c", common.WrapWithPrefix(config.LaunchPrefix, fmt.Sprintf("xdg-open '%s'", paths[i])))
-		cmd.SysProcAttr = &syscall.SysProcAttr{
-			Setsid: true,
+	for _, root := range xdg.ApplicationDirs {
+		if _, err := os.Stat(root); err != nil {
+			continue
 		}
 
-		err := cmd.Start()
-		if err != nil {
-			slog.Error(Name, "actionopen", err)
-		}
+		if err := fastwalk.Walk(&conf, root, func(path string, d fs.DirEntry, err error) error {
+			if strings.HasSuffix(path, ".desktop") {
+				b, err := os.ReadFile(path)
+				if err != nil {
+					return err
+				}
 
-		go func() {
-			cmd.Wait()
-		}()
-	default:
-		slog.Error(Name, "nosuchaction", action)
-	}
-}
-
-func init() {
-}
-
-func Query(qid uint32, iid uint32, text string) []common.Entry {
-	start := time.Now()
-	entries := []common.Entry{}
-
-	var toFilter []string
-
-	data, ok := results.GetData(qid, iid, []string{})
-	if ok {
-		toFilter = data
-	} else {
-		toFilter = paths
-	}
-
-	slog.Info(Name, "queryingfiles", len(toFilter))
-
-	for k, v := range toFilter {
-		common.FuzzyScore(text, v)
-
-		i := strconv.Itoa(k)
-
-		e := common.Entry{
-			Identifier: i,
-			Text:       v,
-			SubText:    "",
-			Provider:   Name,
-		}
-
-		var match string
-		var ok bool
-
-		if text != "" {
-			e.Fuzzy = &common.FuzzyMatchInfo{
-				Field: "text",
+				if bytes.Contains(b, []byte("Terminal=true")) {
+					terminalApps[filepath.Base(path)] = struct{}{}
+				}
 			}
-
-			match, e.Score, e.Fuzzy.Pos, e.Fuzzy.Start, ok = calcScore(text, v)
-
-			if ok && match != e.Text {
-				e.SubText = match
-				e.Fuzzy.Field = "text"
-			}
-		}
-
-		if e.Score > 0 || text == "" {
-			results.Queries[qid].Lock()
-			results.Queries[qid].Results[iid] = append(results.Queries[qid].Results[iid], v)
-			results.Queries[qid].Unlock()
-
-			entries = append(entries, e)
+			return nil
+		}); err != nil {
+			slog.Error(Name, "walk", err)
+			os.Exit(1)
 		}
 	}
-
-	slog.Info(Name, "queryresult", len(entries), "time", time.Since(start))
-	return entries
 }
 
 func Load() {
 	start := time.Now()
+
+	findTerminalApps()
+	terminal = common.GetTerminal()
+
 	paths = []string{}
 	home, _ := os.UserHomeDir()
 	cmd := exec.Command("fd", ".", home, "--ignore-vcs", "--type", "file", "--type", "directory")
@@ -158,32 +106,6 @@ func Load() {
 	}
 
 	slog.Info(Name, "files", len(paths), "time", time.Since(start))
-}
-
-func calcScore(q string, d string) (string, int, *[]int, int, bool) {
-	var scoreRes int
-	var posRes *[]int
-	var startRes int
-	var match string
-	var modifier int
-
-	score, pos, start := common.FuzzyScore(q, d)
-
-	if score > scoreRes {
-		scoreRes = score
-		posRes = pos
-		startRes = start
-		match = d
-		modifier = 0
-	}
-
-	if scoreRes == 0 {
-		return "", 0, nil, 0, false
-	}
-
-	scoreRes = max(scoreRes-min(modifier*10, 50)-startRes, 10)
-
-	return match, scoreRes, posRes, startRes, true
 }
 
 func EntryToString(e common.Entry) string {
