@@ -34,7 +34,9 @@ func Query(qid uint32, query string) []common.Entry {
 		toMatch = v
 		slog.Info(Name, "query", "resuming", "files", len(toMatch))
 	} else {
+    filesMu.RLock()
 		toMatch = files
+    filesMu.RUnlock()
 	}
 
 	resultsMutex.Lock()
