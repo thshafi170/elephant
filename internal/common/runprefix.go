@@ -3,7 +3,6 @@ package common
 import (
 	"fmt"
 	"log/slog"
-	"os"
 	"os/exec"
 )
 
@@ -31,8 +30,7 @@ func InitRunPrefix() {
 	}
 
 	if runPrefix == "" {
-		slog.Error("config", "runprefix", "needs app2unit or uwsm")
-		os.Exit(1)
+		slog.Error("config", "runprefix", "<empty>")
 	}
 }
 
