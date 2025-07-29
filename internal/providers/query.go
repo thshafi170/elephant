@@ -13,16 +13,22 @@ import (
 	"github.com/abenz1267/elephant/internal/common"
 )
 
+type QueryData struct {
+	Query     string
+	Iteration atomic.Uint32
+	sync.Mutex
+}
+
 var (
 	qid atomic.Uint32
 	// sessionid => prefix => id
-	queries        map[uint32]map[string]uint32
+	queries        map[uint32]map[uint32]*QueryData
 	queryProviders map[uint32][]string
 	queryMutex     sync.Mutex
 )
 
 func init() {
-	queries = make(map[uint32]map[string]uint32)
+	queries = make(map[uint32]map[uint32]*QueryData)
 	queryProviders = make(map[uint32][]string)
 }
 
@@ -31,24 +37,22 @@ func Query(sid uint32, providers []string, text string, conn net.Conn) {
 
 	queryMutex.Lock()
 	if _, ok := queries[sid]; !ok {
-		queries[sid] = make(map[string]uint32)
+		queries[sid] = make(map[uint32]*QueryData)
 	}
 	queryMutex.Unlock()
 
 	var currentQID uint32
+	var currentIteration uint32
 
 	if text != "" {
 		lastLength := 1000
 
 		for k, v := range queries[sid] {
-			if strings.HasPrefix(text, k) && len(k) < lastLength {
-				currentQID = v
-				lastLength = len(k)
-
-				queryMutex.Lock()
-				delete(queries[sid], k)
-				queries[sid][text] = v
-				queryMutex.Unlock()
+			if strings.HasPrefix(text, v.Query) && len(v.Query) < lastLength {
+				currentQID = k
+				lastLength = len(v.Query)
+				v.Iteration.Add(1)
+				currentIteration = v.Iteration.Load()
 			}
 		}
 
@@ -58,20 +62,26 @@ func Query(sid uint32, providers []string, text string, conn net.Conn) {
 
 			queryMutex.Lock()
 			queryProviders[currentQID] = providers
-			queries[sid][text] = currentQID
+			data := &QueryData{
+				Query: text,
+			}
+			data.Iteration.Add(1)
+			currentIteration = data.Iteration.Load()
+			queries[sid][currentQID] = data
 			queryMutex.Unlock()
 
-			slog.Info("providers", "query", "new", "qid", currentQID, "text", text)
+			slog.Info("providers", "query", "new", "qid", currentQID, "iid", currentIteration, "text", text)
 		} else {
-			slog.Info("providers", "query", "resuming", "qid", currentQID, "text", text)
+			slog.Info("providers", "query", "resuming", "qid", currentQID, "iid", currentIteration, "text", text)
 		}
 	} else {
 		qid.Add(1)
 		currentQID = qid.Load()
-		slog.Info("providers", "query", "new", "qid", currentQID, "text", "<empty>")
+		currentIteration = 1
+		slog.Info("providers", "query", "new", "qid", currentQID, "iid", currentIteration, "text", "<empty>")
 	}
 
-	conn.Write(fmt.Appendf(nil, "qid;%d\n", currentQID))
+	conn.Write(fmt.Appendf(nil, "qid;%d;%d\n", currentQID, currentIteration))
 
 	var mut sync.Mutex
 
@@ -112,7 +122,12 @@ func Query(sid uint32, providers []string, text string, conn net.Conn) {
 	}
 
 	for _, v := range entries {
-		conn.Write(fmt.Appendf(nil, "%d;%s\n", currentQID, Providers[v.Provider].EntryToString(v)))
+		if currentIteration != queries[sid][currentQID].Iteration.Load() {
+			slog.Info("providers", "results", "aborting", "qid", currentQID, "iid", currentIteration)
+			return
+		}
+
+		conn.Write(fmt.Appendf(nil, "%d;%d;%s\n", currentQID, currentIteration, Providers[v.Provider].EntryToString(v)))
 	}
 
 	slog.Info("providers", "results", len(entries), "time", time.Since(start))

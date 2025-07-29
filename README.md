@@ -30,20 +30,21 @@ go build -buildmode=plugin && cp desktopapplications.so ~/.config/elephant/provi
 Once you have this setup, you can start using `elephant`:
 
 How to query, example:
+`qid = queryid, iid = iterationid`
 
 1. Open socket connection with f.e. `nc -U /tmp/elephant.sock`
 2. You can now query with: `query;desktopapplications;firefox`
-3. You'll retrieve a `qid;<number>`
+3. You'll retrieve a `qid;<qid>;<iid>`
 4. You'll retrieve a list of entries:
 
 ```
-1;desktopapplications;/usr/share/applications/firefox-developer-edition.desktop;Firefox Developer Edition;Web Browser;firefox-developer-edition;6,5,4,3,2,1,0;0;text
+1;1;desktopapplications;/usr/share/applications/firefox-developer-edition.desktop;Firefox Developer Edition;Web Browser;firefox-developer-edition;6,5,4,3,2,1,0;0;text
 ```
 
 To break this down:
 
 ```
-QID;PROVIDER;IDENTIFIER;TEXT;SUBTEXT;ICON;POSITIONS OF FUZZY MATCH;STARTING POSITION OF FUZZY MATCH;FUZZY MATCH FIELDNAME
+QID;IID;PROVIDER;IDENTIFIER;TEXT;SUBTEXT;ICON;POSITIONS OF FUZZY MATCH;STARTING POSITION OF FUZZY MATCH;FUZZY MATCH FIELDNAME
 ```
 
 5. You can activate an item like this:
