@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"plugin"
+	"slices"
 	"sync"
 	"time"
 
@@ -29,90 +30,103 @@ var Providers map[string]Provider
 
 func Load() {
 	start := time.Now()
+
+	var mut sync.Mutex
+	have := []string{}
+	dirs := []string{filepath.Join(common.ConfigDir(), "providers"), "/etc/xdg/elephant/providers"}
+
 	Providers = make(map[string]Provider)
-	dir := filepath.Join(common.ConfigDir(), "providers")
 
-	if !common.FileExists(dir) {
-		slog.Error("providers", "load", "you don't have any providers installed")
-		os.Exit(1)
-	}
+	for _, v := range dirs {
+		if !common.FileExists(v) {
+			continue
+		}
 
-	conf := fastwalk.Config{
-		Follow: true,
-	}
+		conf := fastwalk.Config{
+			Follow: true,
+		}
 
-	walkFn := func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
+		walkFn := func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				slog.Error("providers", "load", err)
+				os.Exit(1)
+			}
+
+			mut.Lock()
+			done := slices.Contains(have, filepath.Base(path))
+			mut.Unlock()
+
+			if !done && filepath.Ext(path) == ".so" {
+				p, err := plugin.Open(path)
+				if err != nil {
+					panic(err)
+				}
+
+				name, err := p.Lookup("Name")
+				if err != nil {
+					slog.Error("providers", "load", err, "provider", path)
+				}
+
+				namePretty, err := p.Lookup("NamePretty")
+				if err != nil {
+					slog.Error("providers", "load", err, "provider", path)
+				}
+
+				loadFunc, err := p.Lookup("Load")
+				if err != nil {
+					slog.Error("providers", "load", err, "provider", path)
+				}
+
+				entryToStringFunc, err := p.Lookup("EntryToString")
+				if err != nil {
+					slog.Error("providers", "load", err, "provider", path)
+				}
+
+				activateFunc, err := p.Lookup("Activate")
+				if err != nil {
+					slog.Error("providers", "load", err, "provider", path)
+				}
+
+				queryFunc, err := p.Lookup("Query")
+				if err != nil {
+					slog.Error("providers", "load", err, "provider", path)
+				}
+
+				cleanupFunc, err := p.Lookup("Cleanup")
+				if err != nil {
+					slog.Error("providers", "load", err, "provider", path)
+				}
+
+				printDocFunc, err := p.Lookup("PrintDoc")
+				if err != nil {
+					slog.Error("providers", "load", err, "provider", path)
+				}
+
+				provider := Provider{
+					Load:          loadFunc.(func()),
+					Name:          name.(*string),
+					EntryToString: entryToStringFunc.(func(common.Entry) string),
+					Cleanup:       cleanupFunc.(func(uint32)),
+					Activate:      activateFunc.(func(qid uint32, identifier, action string)),
+					Query:         queryFunc.(func(uint32, uint32, string) []common.Entry),
+					NamePretty:    namePretty.(*string),
+					PrintDoc:      printDocFunc.(func()),
+				}
+
+				Providers[*provider.Name] = provider
+
+				mut.Lock()
+				have = append(have, filepath.Base(path))
+				mut.Unlock()
+			}
+
+			return err
+		}
+
+		if err := fastwalk.Walk(&conf, v, walkFn); err != nil {
 			slog.Error("providers", "load", err)
 			os.Exit(1)
 		}
-
-		if filepath.Ext(path) == ".so" {
-			p, err := plugin.Open(path)
-			if err != nil {
-				panic(err)
-			}
-
-			name, err := p.Lookup("Name")
-			if err != nil {
-				slog.Error("providers", "load", err, "provider", path)
-			}
-
-			namePretty, err := p.Lookup("NamePretty")
-			if err != nil {
-				slog.Error("providers", "load", err, "provider", path)
-			}
-
-			loadFunc, err := p.Lookup("Load")
-			if err != nil {
-				slog.Error("providers", "load", err, "provider", path)
-			}
-
-			entryToStringFunc, err := p.Lookup("EntryToString")
-			if err != nil {
-				slog.Error("providers", "load", err, "provider", path)
-			}
-
-			activateFunc, err := p.Lookup("Activate")
-			if err != nil {
-				slog.Error("providers", "load", err, "provider", path)
-			}
-
-			queryFunc, err := p.Lookup("Query")
-			if err != nil {
-				slog.Error("providers", "load", err, "provider", path)
-			}
-
-			cleanupFunc, err := p.Lookup("Cleanup")
-			if err != nil {
-				slog.Error("providers", "load", err, "provider", path)
-			}
-
-			printDocFunc, err := p.Lookup("PrintDoc")
-			if err != nil {
-				slog.Error("providers", "load", err, "provider", path)
-			}
-
-			provider := Provider{
-				Load:          loadFunc.(func()),
-				Name:          name.(*string),
-				EntryToString: entryToStringFunc.(func(common.Entry) string),
-				Cleanup:       cleanupFunc.(func(uint32)),
-				Activate:      activateFunc.(func(qid uint32, identifier, action string)),
-				Query:         queryFunc.(func(uint32, uint32, string) []common.Entry),
-				NamePretty:    namePretty.(*string),
-				PrintDoc:      printDocFunc.(func()),
-			}
-
-			Providers[*provider.Name] = provider
-		}
-
-		return err
-	}
-
-	if err := fastwalk.Walk(&conf, dir, walkFn); err != nil {
-		slog.Error("providers", "load", err)
-		os.Exit(1)
 	}
 
 	if len(Providers) == 0 {
