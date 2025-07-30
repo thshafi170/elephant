@@ -34,7 +34,7 @@ func Activate(qid uint32, identifier, action string) {
 			path = filepath.Dir(path)
 		}
 
-		run := common.WrapWithPrefix(config.LaunchPrefix, fmt.Sprintf("xdg-open '%s'", path))
+		run := strings.TrimSpace(fmt.Sprintf("%s xdg-open '%s'", common.LaunchPrefix(config.LaunchPrefix), path))
 
 		if forceTerminalForFile(path) {
 			run = wrapWithTerminal(run)

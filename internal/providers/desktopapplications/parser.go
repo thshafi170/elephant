@@ -2,10 +2,13 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
+	"slices"
 	"strings"
+	"unicode"
 )
 
 type Data struct {
@@ -13,6 +16,7 @@ type Data struct {
 	Hidden         bool
 	Terminal       bool
 	Action         string
+	Exec           string
 	Name           string
 	Comment        string
 	Path           string
@@ -145,13 +149,110 @@ func parseData(in []byte, l, ll string) Data {
 		case bytes.HasPrefix(line, []byte("NotShowIn=")):
 			res.NotShowIn = strings.Split(string(bytes.TrimPrefix(line, []byte("NotShowIn="))), ";")
 
+		case bytes.HasPrefix(line, []byte("Exec=")):
+			if config.LaunchPrefix == "CLEAR" {
+				exec, err := parseExec(string(bytes.TrimPrefix(line, []byte("Exec="))))
+				if err != nil {
+					slog.Error(Name, "parsing", err)
+				}
+
+				res.Exec = exec
+			}
 		case bytes.Contains(line, []byte("[Desktop Action ")):
 			res.Action = string(bytes.TrimPrefix(line, []byte("[Desktop Action ")))
 			res.Action = strings.TrimSuffix(res.Action, "]")
 		}
+
 	}
 
 	return res
+}
+
+var fieldCodes = []string{"%f", "%F", "%u", "%U", "%d", "%D", "%n", "%N", "%i", "%c", "%k", "%v", "%m"}
+
+// parseExec converts an XDG desktop file Exec entry into a slice of strings
+// suitable for exec.Command. It handles field codes and proper escaping according
+// to the XDG Desktop Entry specification.
+// See: https://specifications.freedesktop.org/desktop-entry-spec/latest/ar01s07.html
+func parseExec(execLine string) (string, error) {
+	if execLine == "" {
+		return "", errors.New("empty exec line")
+	}
+
+	var (
+		parts         []string
+		current       strings.Builder
+		inQuote       bool
+		escaped       bool
+		doubleEscaped bool
+	)
+
+	// Helper to append current token and reset builder
+	appendCurrent := func() {
+		if current.Len() > 0 {
+			parts = append(parts, current.String())
+			current.Reset()
+		}
+	}
+
+	// Process each rune in the exec line
+	for _, r := range execLine {
+		switch {
+		case doubleEscaped:
+			// Handle double-escaped character
+			current.WriteRune(r)
+			doubleEscaped = false
+
+		case escaped && r == '\\':
+			// This is a double escape sequence
+			current.WriteRune('\\')
+			doubleEscaped = true
+			escaped = false
+
+		case escaped:
+			// Handle escaped character
+			if r == '"' {
+				current.WriteRune('"')
+			} else {
+				current.WriteRune('\\')
+				current.WriteRune(r)
+			}
+			escaped = false
+
+		case r == '\\':
+			escaped = true
+
+		case r == '"':
+			inQuote = !inQuote
+			// Keep the quotes in the output for shell interpretation
+			current.WriteRune('"')
+
+		case unicode.IsSpace(r) && !inQuote:
+			// Space outside quotes marks token boundary
+			appendCurrent()
+
+		default:
+			current.WriteRune(r)
+		}
+	}
+
+	// Append final token if any
+	appendCurrent()
+
+	// Remove field codes
+	for k, v := range parts {
+		if len(v) == 2 && slices.Contains(fieldCodes, v) {
+			until := min(k+1, len(parts))
+
+			parts = slices.Delete(parts, k, until)
+		}
+	}
+
+	if len(parts) == 0 {
+		return "", errors.New("no command found after parsing")
+	}
+
+	return strings.Join(parts, " "), nil
 }
 
 func splitIntoParsebles(in []byte) [][]byte {

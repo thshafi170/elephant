@@ -1,7 +1,6 @@
 package common
 
 import (
-	"fmt"
 	"log/slog"
 	"os/exec"
 )
@@ -30,20 +29,18 @@ func InitRunPrefix() {
 	}
 
 	if runPrefix == "" {
-		slog.Error("config", "runprefix", "<empty>")
+		slog.Info("config", "runprefix", "<empty>")
 	}
 }
 
-func WrapWithPrefix(override, in string) string {
+func LaunchPrefix(override string) string {
 	if override == "CLEAR" {
-		return in
+		return ""
 	}
 
-	prefix := override
-
-	if prefix == "" {
-		prefix = runPrefix
+	if override != "" {
+		return override
 	}
 
-	return fmt.Sprintf("%s %s", prefix, in)
+	return runPrefix
 }

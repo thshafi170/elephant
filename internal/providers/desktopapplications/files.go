@@ -1,9 +1,6 @@
 package main
 
 import (
-	"github.com/adrg/xdg"
-	"github.com/charlievieth/fastwalk"
-	"github.com/fsnotify/fsnotify"
 	"io/fs"
 	"log/slog"
 	"os"
@@ -11,6 +8,10 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/adrg/xdg"
+	"github.com/charlievieth/fastwalk"
+	"github.com/fsnotify/fsnotify"
 )
 
 var (
@@ -85,7 +86,7 @@ func walkFunction(path string, d fs.DirEntry, err error) error {
 		return nil
 	}
 
-	if !d.IsDir() && filepath.Ext(path) == ".desktop" {
+	if !d.IsDir() && filepath.Ext(path) == ".desktop" && strings.Contains(path, "firefox") {
 		addNewEntry(path)
 	}
 
