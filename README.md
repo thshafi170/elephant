@@ -25,9 +25,10 @@ cd ../internals/providers/desktopapplications
 go build -buildmode=plugin && cp desktopapplications.so ~/.config/elephant/providers/
 ```
 
-Once you have this setup, you can start using `elephant`:
+Once you have this setup, you can start using `elephant`.
 
-How to query, example:
+### How to query:
+
 `qid = queryid, iid = iterationid`
 
 1. Open socket connection with f.e. `nc -U /tmp/elephant.sock`
@@ -45,7 +46,25 @@ To break this down:
 QID;IID;PROVIDER;IDENTIFIER;TEXT;SUBTEXT;ICON;POSITIONS OF FUZZY MATCH;STARTING POSITION OF FUZZY MATCH;FUZZY MATCH FIELDNAME
 ```
 
-5. You can activate an item like this:
+### How to subscribe to changes:
+
+Subscribe to a query with an interval:
+
+```
+subscribe;1000;desktopapplications;foot
+```
+
+Subscribe to realtime data-changes of a provider:
+
+```
+subscribe;0;desktopapplications;
+```
+
+You'll retrieve `sid;100000001;changed` as status updates.
+
+You can unsubscribe again by doing `unsubscribe;100000001`.
+
+### How to activate:
 
 ```
 activate;1;desktopapplications;firefox-developer-edition.desktop;

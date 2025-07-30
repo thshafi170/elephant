@@ -1,6 +1,7 @@
 package providers
 
 import (
+	"log/slog"
 	"runtime"
 	"runtime/debug"
 	"sync"
@@ -45,4 +46,12 @@ func init() {
 			debug.FreeOSMemory()
 		}
 	}()
+}
+
+func Cleanup(qid uint32) {
+	slog.Info("providers", "cleanup", qid)
+
+	for _, v := range queryProviders[qid] {
+		Providers[v].Cleanup(qid)
+	}
 }

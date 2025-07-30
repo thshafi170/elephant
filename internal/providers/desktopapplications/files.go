@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/abenz1267/elephant/internal/providers"
 	"github.com/adrg/xdg"
 	"github.com/charlievieth/fastwalk"
 	"github.com/fsnotify/fsnotify"
@@ -86,7 +87,7 @@ func walkFunction(path string, d fs.DirEntry, err error) error {
 		return nil
 	}
 
-	if !d.IsDir() && filepath.Ext(path) == ".desktop" && strings.Contains(path, "firefox") {
+	if !d.IsDir() && filepath.Ext(path) == ".desktop" {
 		addNewEntry(path)
 	}
 
@@ -138,6 +139,9 @@ func addDirToWatcher(dir string, watchedDirs map[string]bool) {
 func watchFiles() {
 	defer watcher.Close()
 
+	change := make(chan fsnotify.Event)
+	go debounceFileHandle(500*time.Millisecond, change)
+
 	for {
 		select {
 		case event, ok := <-watcher.Events:
@@ -145,8 +149,7 @@ func watchFiles() {
 				return
 			}
 
-			go handleFileEvent(event)
-
+			change <- event
 		case err, ok := <-watcher.Errors:
 			if !ok {
 				return
@@ -163,6 +166,23 @@ func checkSubdirOfXDG(subdir string) bool {
 		}
 	}
 	return false
+}
+
+func debounceFileHandle(interval time.Duration, change chan fsnotify.Event) {
+	shouldParse := false
+	var event fsnotify.Event
+
+	for {
+		select {
+		case event = <-change:
+			shouldParse = true
+		case <-time.After(interval):
+			if shouldParse {
+				handleFileEvent(event)
+				shouldParse = false
+			}
+		}
+	}
 }
 
 func handleFileEvent(event fsnotify.Event) {
@@ -196,6 +216,8 @@ func handleFileEvent(event fsnotify.Event) {
 	case event.Op&fsnotify.Rename == fsnotify.Rename:
 		handleFileRemove(event.Name)
 	}
+
+	providers.ProviderUpdated <- Name
 }
 
 /*

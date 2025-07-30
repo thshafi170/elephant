@@ -14,11 +14,17 @@ import (
 	"github.com/abenz1267/elephant/internal/providers"
 )
 
-var sid uint32
+// connection id
+var cid uint32
 
 const (
 	// query;files;somefile
 	ActionQuery = "query"
+	// subscribe;0;files;
+	// subscribe;1000;files;somefile
+	ActionSubscribe = "subscribe"
+	// unsubscribe;100001
+	ActionUnsubscribe = "unsubscribe"
 	// cleanup;qid
 	ActionCleanup = "cleanup"
 	// activate;qid;files;identifier;action
@@ -47,9 +53,9 @@ func StartListen() {
 
 		slog.Info("comm", "connection", "new")
 
-		sid++
+		cid++
 
-		go handle(conn, sid)
+		go handle(conn, cid)
 	}
 }
 
@@ -65,6 +71,42 @@ func handle(conn net.Conn, sid uint32) {
 		request := strings.Split(message, ";")
 
 		switch request[0] {
+		case ActionUnsubscribe:
+			if len(request) != 2 {
+				slog.Error("comm", "requestinvalid", message)
+				conn.Write(fmt.Appendf(nil, "error: invalid unsubscribe request '%s'\n", message))
+				continue
+			}
+
+			sid, err := strconv.ParseUint(request[1], 10, 32)
+			if err != nil {
+				slog.Error("comm", "requestinvalid", message)
+				conn.Write(fmt.Appendf(nil, "error: invalid cleanup request '%s'\n", message))
+				continue
+			}
+
+			providers.Unsubscribe(uint32(sid))
+		case ActionSubscribe:
+			if len(request) != 4 {
+				slog.Error("comm", "requestinvalid", message)
+				conn.Write(fmt.Appendf(nil, "error: invalid subscribe request '%s'\n", message))
+				continue
+			}
+
+			interval, err := strconv.Atoi(request[1])
+			if err != nil {
+				slog.Error("comm", "requestinvalid", message)
+				conn.Write(fmt.Appendf(nil, "error: invalid subscribe request '%s'\n", message))
+				continue
+			}
+
+			if interval == 0 && request[3] != "" {
+				slog.Error("comm", "requestinvalid", message)
+				conn.Write(fmt.Appendf(nil, "error: invalid subscribe request '%s'\n", message))
+				continue
+			}
+
+			go providers.Subscribe(interval, request[2], request[3], conn)
 		case ActionQuery:
 			if len(request) != 3 {
 				slog.Error("comm", "requestinvalid", message)
@@ -83,7 +125,7 @@ func handle(conn net.Conn, sid uint32) {
 			qid, err := strconv.ParseUint(request[1], 10, 32)
 			if err != nil {
 				slog.Error("comm", "requestinvalid", message)
-				conn.Write(fmt.Appendf(nil, "error: invalid activate request '%s'\n", message))
+				conn.Write(fmt.Appendf(nil, "error: invalid cleanup request '%s'\n", message))
 				continue
 			}
 

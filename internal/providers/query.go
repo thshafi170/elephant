@@ -107,17 +107,7 @@ func Query(sid uint32, providers []string, text string, conn net.Conn) {
 
 	wg.Wait()
 
-	slices.SortFunc(entries, func(a common.Entry, b common.Entry) int {
-		if a.Score > b.Score {
-			return -1
-		}
-
-		if b.Score > a.Score {
-			return 1
-		}
-
-		return strings.Compare(a.Text, b.Text)
-	})
+	slices.SortFunc(entries, sortEntries)
 
 	if len(entries) == 0 {
 		conn.Write(fmt.Appendf(nil, "qid;%d;noresults", currentQID))
@@ -137,18 +127,14 @@ func Query(sid uint32, providers []string, text string, conn net.Conn) {
 	slog.Info("providers", "results", len(entries), "time", time.Since(start))
 }
 
-func Activate(sid, qid uint32, provider, identifier, action string) {
-	slog.Info("providers", "provider", provider, "identifier", identifier)
-
-	Providers[provider].Activate(qid, identifier, action)
-
-	Cleanup(qid)
-}
-
-func Cleanup(qid uint32) {
-	slog.Info("providers", "cleanup", qid)
-
-	for _, v := range queryProviders[qid] {
-		Providers[v].Cleanup(qid)
+func sortEntries(a common.Entry, b common.Entry) int {
+	if a.Score > b.Score {
+		return -1
 	}
+
+	if b.Score > a.Score {
+		return 1
+	}
+
+	return strings.Compare(a.Text, b.Text)
 }
