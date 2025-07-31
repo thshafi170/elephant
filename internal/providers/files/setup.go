@@ -125,5 +125,5 @@ func EntryToString(e common.Entry) string {
 		field = e.Fuzzy.Field
 	}
 
-	return fmt.Sprintf("%s;%s;%s;%s;%s;%s;%d;%s", e.Provider, e.Identifier, e.Text, "", "", strings.Join(positions, ","), start, field)
+	return fmt.Sprintf("%s;%s;%s;%s;%d;%s", e.Provider, e.Identifier, e.Text, strings.Join(positions, ","), start, field)
 }
