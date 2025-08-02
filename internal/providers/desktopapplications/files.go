@@ -16,17 +16,16 @@ import (
 )
 
 var (
-	files            map[string]*DesktopFile
-	watchedDirs      map[string]bool
-	symlinkToReal    map[string]string   // this should be [symlink]realfile
-	realToSymlink    map[string][]string // this should be [realfile][]symlink
-	filesMu          sync.RWMutex
-	watcherDirsMu    sync.RWMutex
-	symlinkTargetsMu sync.RWMutex // we use this for both symlink maps
-	watcher          *fsnotify.Watcher
-	regionLocale     = ""
-	langLocale       = ""
-	dirs             []string
+	files         map[string]*DesktopFile
+	watchedDirs   map[string]bool
+	symlinkToReal map[string]string   // this should be [symlink]realfile
+	realToSymlink map[string][]string // this should be [realfile][]symlink
+	filesMu       sync.RWMutex
+	watcherDirsMu sync.RWMutex
+	watcher       *fsnotify.Watcher
+	regionLocale  = ""
+	langLocale    = ""
+	dirs          []string
 )
 
 func loadFiles() {
@@ -107,14 +106,12 @@ func trackSymlinks(filename string) {
 	}
 
 	// setup two-way tracking
-	symlinkTargetsMu.Lock()
 	if realToSymlink[targetPath] == nil {
 		realToSymlink[targetPath] = make([]string, 0)
 		realToSymlink[targetPath] = append(realToSymlink[targetPath], filename)
 	}
 
 	symlinkToReal[filename] = targetPath
-	symlinkTargetsMu.Unlock()
 
 	addDirToWatcher(filepath.Dir(targetPath), watchedDirs)
 
@@ -139,17 +136,14 @@ func addDirToWatcher(dir string, watchedDirs map[string]bool) {
 func watchFiles() {
 	defer watcher.Close()
 
-	change := make(chan fsnotify.Event)
-	go debounceFileHandle(500*time.Millisecond, change)
-
 	for {
 		select {
 		case event, ok := <-watcher.Events:
 			if !ok {
 				return
 			}
+			handleFileEvent(event)
 
-			change <- event
 		case err, ok := <-watcher.Errors:
 			if !ok {
 				return
@@ -166,23 +160,6 @@ func checkSubdirOfXDG(subdir string) bool {
 		}
 	}
 	return false
-}
-
-func debounceFileHandle(interval time.Duration, change chan fsnotify.Event) {
-	shouldParse := false
-	var event fsnotify.Event
-
-	for {
-		select {
-		case event = <-change:
-			shouldParse = true
-		case <-time.After(interval):
-			if shouldParse {
-				handleFileEvent(event)
-				shouldParse = false
-			}
-		}
-	}
 }
 
 func handleFileEvent(event fsnotify.Event) {
@@ -220,20 +197,8 @@ func handleFileEvent(event fsnotify.Event) {
 	providers.ProviderUpdated <- Name
 }
 
-/*
-handleFileCreate
-we parse the desktop file
-if a file is a symlink, we need to track it and set the desktop entry
-
-if the file is not a symlink, then we check if any symlinks resolve to it
-if any symlinks resolve to it, we set the desktop entry for each of those
-if no symlinks resolve to it, we set the desktop entry for itself
-*/
 func handleFileCreate(path string) {
-	symlinkTargetsMu.Lock()
 	clone := realToSymlink[path]
-	symlinkTargetsMu.Unlock()
-
 	_, sym := isSymlink(path)
 	defer slog.Debug(Name, "file_created", path)
 	if !sym {
@@ -251,18 +216,8 @@ func handleFileCreate(path string) {
 	addNewEntry(path)
 }
 
-/*
-handleFileUpdate
-we parse the desktop file
-if a file is a symlink, we need to track it and set the desktop entry
-if the file is not a symlink, then we check if any symlinks resolve to it
-if any symlinks resolve to it, we set the desktop entry for each of those
-if no symlinks resolve to it, we set the desktop entry for itself
-*/
 func handleFileUpdate(path string) {
-	symlinkTargetsMu.Lock()
 	clone := realToSymlink[path]
-	symlinkTargetsMu.Unlock()
 
 	defer slog.Debug(Name, "file_updated", path)
 
@@ -281,15 +236,7 @@ func handleFileUpdate(path string) {
 	addNewEntry(path)
 }
 
-/*
-handleFileUpdate
-if a file is a symlink, we resolve it.
-if the origin is referenced by more than this symlink, ignore it
-if the origin is not referenced by more than this symlink, untrack it
-*/
 func handleFileRemove(path string) {
-	symlinkTargetsMu.Lock()
-	defer symlinkTargetsMu.Unlock()
 	originPath, sym := isSymlink(path)
 	defer slog.Debug(Name, "file_removed", path)
 	if sym {
