@@ -13,12 +13,6 @@ type timestamps struct {
 	sync.Mutex
 }
 
-func (t *timestamps) remove(qid uint32) {
-	t.Lock()
-	delete(t.data, qid)
-	t.Unlock()
-}
-
 var timestampedqueries *timestamps
 
 func init() {

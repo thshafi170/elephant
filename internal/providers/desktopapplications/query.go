@@ -28,18 +28,18 @@ func Query(qid uint32, iid uint32, query string) []common.Entry {
 
 	isSub := qid >= 100_000_000
 
-	if !isSub {
-		data, ok := results.GetData(qid, iid, make(map[string]*DesktopFile))
+	if !isSub && query != "" {
+		data, ok := results.GetData(query, qid, iid, make(map[string]*DesktopFile))
 		if ok {
 			toFilter = data
 		} else {
 			toFilter = files
 		}
-
-		slog.Info(Name, "queryingfiles", len(toFilter))
 	} else {
 		toFilter = files
 	}
+
+	slog.Info(Name, "queryingfiles", len(toFilter))
 
 	for k, v := range toFilter {
 		if len(v.NotShowIn) != 0 && slices.Contains(v.NotShowIn, desktop) || len(v.OnlyShowIn) != 0 && !slices.Contains(v.OnlyShowIn, desktop) || v.Hidden || v.NoDisplay {
@@ -75,8 +75,10 @@ func Query(qid uint32, iid uint32, query string) []common.Entry {
 			if e.Score > 0 || query == "" {
 				entries = append(entries, e)
 
-				if !isSub {
-					results.Queries[qid].Results[iid][k] = v
+				if !isSub && query != "" {
+					results.Lock()
+					results.Queries[qid][iid].Results[k] = v
+					results.Unlock()
 				}
 			}
 		}
@@ -112,12 +114,20 @@ func Query(qid uint32, iid uint32, query string) []common.Entry {
 				if e.Score > 0 || query == "" {
 					entries = append(entries, e)
 
-					if !isSub {
-						results.Queries[qid].Results[iid][k] = v
+					if !isSub && query != "" {
+						results.Lock()
+						results.Queries[qid][iid].Results[k] = v
+						results.Unlock()
 					}
 				}
 			}
 		}
+	}
+
+	if !isSub && query != "" {
+		results.Lock()
+		results.Queries[qid][iid].Done = true
+		results.Unlock()
 	}
 
 	if !isSub {

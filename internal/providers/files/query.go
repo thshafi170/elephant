@@ -8,15 +8,19 @@ import (
 	"github.com/abenz1267/elephant/internal/common"
 )
 
-func Query(qid uint32, iid uint32, text string) []common.Entry {
+func Query(qid uint32, iid uint32, query string) []common.Entry {
 	start := time.Now()
 	entries := []common.Entry{}
 
 	var toFilter []string
 
-	data, ok := results.GetData(qid, iid, []string{})
-	if ok {
-		toFilter = data
+	if query != "" {
+		data, ok := results.GetData(query, qid, iid, []string{})
+		if ok {
+			toFilter = data
+		} else {
+			toFilter = paths
+		}
 	} else {
 		toFilter = paths
 	}
@@ -24,7 +28,7 @@ func Query(qid uint32, iid uint32, text string) []common.Entry {
 	slog.Info(Name, "queryingfiles", len(toFilter))
 
 	for k, v := range toFilter {
-		common.FuzzyScore(text, v)
+		common.FuzzyScore(query, v)
 
 		i := strconv.Itoa(k)
 
@@ -38,12 +42,12 @@ func Query(qid uint32, iid uint32, text string) []common.Entry {
 		var match string
 		var ok bool
 
-		if text != "" {
+		if query != "" {
 			e.Fuzzy = &common.FuzzyMatchInfo{
 				Field: "text",
 			}
 
-			match, e.Score, e.Fuzzy.Pos, e.Fuzzy.Start, ok = calcScore(text, v)
+			match, e.Score, e.Fuzzy.Pos, e.Fuzzy.Start, ok = calcScore(query, v)
 
 			if ok && match != e.Text {
 				e.SubText = match
@@ -51,13 +55,21 @@ func Query(qid uint32, iid uint32, text string) []common.Entry {
 			}
 		}
 
-		if e.Score > 0 || text == "" {
-			results.Queries[qid].Lock()
-			results.Queries[qid].Results[iid] = append(results.Queries[qid].Results[iid], v)
-			results.Queries[qid].Unlock()
+		if e.Score > 0 || query == "" {
+			if query != "" {
+				results.Lock()
+				results.Queries[qid][iid].Results = append(results.Queries[qid][iid].Results, v)
+				results.Unlock()
+			}
 
 			entries = append(entries, e)
 		}
+	}
+
+	if query != "" {
+		results.Lock()
+		results.Queries[qid][iid].Done = true
+		results.Unlock()
 	}
 
 	slog.Info(Name, "queryresult", len(entries), "time", time.Since(start))
