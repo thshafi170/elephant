@@ -46,32 +46,35 @@ func Query(qid uint32, iid uint32, query string) []common.Entry {
 			continue
 		}
 
-		// add generic entry
-		if config.ShowActions && config.ShowGeneric || !config.ShowActions || (config.ShowActions && len(v.Actions) == 0) || query == "" {
-			e := common.Entry{
-				Identifier: k,
-				Text:       v.Name,
-				SubText:    v.GenericName,
-				Icon:       v.Icon,
-				Provider:   Name,
+		// check generic
+		e := common.Entry{
+			Identifier: k,
+			Text:       v.Name,
+			SubText:    v.GenericName,
+			Icon:       v.Icon,
+			Provider:   Name,
+		}
+
+		var match string
+		var ok bool
+
+		if query != "" {
+			e.Fuzzy = &common.FuzzyMatchInfo{
+				Field: "text",
 			}
 
-			var match string
-			var ok bool
+			match, e.Score, e.Fuzzy.Pos, e.Fuzzy.Start, ok = calcScore(query, &v.Data)
 
-			if query != "" {
-				e.Fuzzy = &common.FuzzyMatchInfo{
-					Field: "text",
-				}
-
-				match, e.Score, e.Fuzzy.Pos, e.Fuzzy.Start, ok = calcScore(query, &v.Data)
-
-				if ok && match != e.Text {
-					e.SubText = match
-					e.Fuzzy.Field = "subtext"
-				}
+			if ok && match != e.Text {
+				e.SubText = match
+				e.Fuzzy.Field = "subtext"
 			}
+		}
 
+		usage, lastUsed := h.FindUsage(query, e.Identifier)
+		e.Score = e.Score + calcUsage(usage, lastUsed)
+
+		if usage != 0 || config.ShowActions && config.ShowGeneric || !config.ShowActions || (config.ShowActions && len(v.Actions) == 0) || query == "" {
 			if e.Score > 0 || query == "" {
 				entries = append(entries, e)
 
@@ -83,34 +86,36 @@ func Query(qid uint32, iid uint32, query string) []common.Entry {
 			}
 		}
 
-		// add actions
-		if (query == "" && config.ShowActionsWithoutQuery) || (query != "" && config.ShowActions) {
-			for _, a := range v.Actions {
+		// check actions
+		for _, a := range v.Actions {
+			e := common.Entry{
+				Identifier: fmt.Sprintf("%s:%s", k, a.Action),
+				Text:       a.Name,
+				SubText:    v.Name,
+				Icon:       a.Icon,
+				Provider:   Name,
+			}
 
-				e := common.Entry{
-					Identifier: fmt.Sprintf("%s:%s", k, a.Action),
-					Text:       a.Name,
-					SubText:    v.Name,
-					Icon:       a.Icon,
-					Provider:   Name,
+			var match string
+			var ok bool
+
+			if query != "" {
+				e.Fuzzy = &common.FuzzyMatchInfo{
+					Field: "text",
 				}
 
-				var match string
-				var ok bool
+				match, e.Score, e.Fuzzy.Pos, e.Fuzzy.Start, ok = calcScore(query, &a)
 
-				if query != "" {
-					e.Fuzzy = &common.FuzzyMatchInfo{
-						Field: "text",
-					}
-
-					match, e.Score, e.Fuzzy.Pos, e.Fuzzy.Start, ok = calcScore(query, &a)
-
-					if ok && match != e.Text {
-						e.SubText = match
-						e.Fuzzy.Field = "subtext"
-					}
+				if ok && match != e.Text {
+					e.SubText = match
+					e.Fuzzy.Field = "subtext"
 				}
+			}
 
+			usage, lastUsed := h.FindUsage(query, e.Identifier)
+			e.Score = e.Score + calcUsage(usage, lastUsed)
+
+			if (query == "" && config.ShowActionsWithoutQuery) || (query != "" && config.ShowActions) || usage != 0 {
 				if e.Score > 0 || query == "" {
 					entries = append(entries, e)
 
@@ -135,6 +140,30 @@ func Query(qid uint32, iid uint32, query string) []common.Entry {
 	}
 
 	return entries
+}
+
+func calcUsage(amount int, last time.Time) int {
+	base := 10
+
+	if amount > 0 {
+		today := time.Now()
+		duration := today.Sub(last)
+		days := int(duration.Hours() / 24)
+
+		if days > 0 {
+			base -= days
+		}
+
+		res := base * amount
+
+		if res < 1 {
+			res = 1
+		}
+
+		return res
+	}
+
+	return 0
 }
 
 func calcScore(q string, d *Data) (string, int, *[]int, int, bool) {

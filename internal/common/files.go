@@ -46,6 +46,12 @@ func ConfigDir() string {
 	return ""
 }
 
+func CacheFile(file string) string {
+	d, _ := os.UserCacheDir()
+
+	return filepath.Join(d, "elephant", file)
+}
+
 func ProviderConfig(provider string) string {
 	provider = fmt.Sprintf("%s.toml", provider)
 

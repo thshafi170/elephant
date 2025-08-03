@@ -11,6 +11,7 @@ type Config struct {
 	ShowActions             bool   `koanf:"show_actions" desc:"include application actions, f.e. 'New Private Window' for Firefox" default:"false"`
 	ShowGeneric             bool   `koanf:"show_generic" desc:"include generic info when show_actions is true" default:"false"`
 	ShowActionsWithoutQuery bool   `koanf:"show_actions_without_query" desc:"show application actions, if the search query is empty" default:"false"`
+	History                 bool   `koanf:"history" desc:"make use of history for sorting" default:"false"`
 }
 
 var config *Config
@@ -21,6 +22,7 @@ func loadConfig() {
 		ShowActions:             false,
 		ShowGeneric:             false,
 		ShowActionsWithoutQuery: false,
+		History:                 false,
 	}
 
 	common.LoadConfig(Name, config)

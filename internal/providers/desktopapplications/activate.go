@@ -31,7 +31,6 @@ func Activate(qid uint32, identifier, action string) {
 	}
 
 	cmd := exec.Command("sh", "-c", toRun)
-	fmt.Println(cmd.String())
 
 	err := cmd.Start()
 	if err != nil {
@@ -41,4 +40,18 @@ func Activate(qid uint32, identifier, action string) {
 	go func() {
 		cmd.Wait()
 	}()
+
+	if config.History {
+		var last uint32
+
+		for k := range results.Queries[qid] {
+			if k > last {
+				last = k
+			}
+		}
+
+		if last != 0 {
+			h.Save(results.Queries[qid][last].Query, identifier)
+		}
+	}
 }
