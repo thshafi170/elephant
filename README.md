@@ -2,6 +2,8 @@
 
 `elephant` is a service providing data and actions via various data-providers. It is meant to be a backend to create f.e. custom launchers.
 
+[![Discord](https://img.shields.io/discord/1402235361463242964?logo=discord)](https://discord.gg/mGQWBQHASt)
+
 ## Current State
 
 The project just started and is therefore highly wip.
