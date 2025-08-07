@@ -15,8 +15,10 @@ import (
 )
 
 const (
-	ActionOpen    = "open"
-	ActionOpenDir = "opendir"
+	ActionOpen     = "open"
+	ActionOpenDir  = "opendir"
+	ActionCopyPath = "copypath"
+	ActionCopyFile = "copyfile"
 )
 
 func Activate(qid uint32, identifier, action string) {
@@ -48,11 +50,34 @@ func Activate(qid uint32, identifier, action string) {
 		err := cmd.Start()
 		if err != nil {
 			slog.Error(Name, "actionopen", err)
+		} else {
+			go func() {
+				cmd.Wait()
+			}()
+		}
+	case ActionCopyPath:
+		cmd := exec.Command("wl-copy", paths[i])
+
+		err := cmd.Start()
+		if err != nil {
+			slog.Error(Name, "actioncopypath", err)
+		} else {
+			go func() {
+				cmd.Wait()
+			}()
 		}
 
-		go func() {
-			cmd.Wait()
-		}()
+	case ActionCopyFile:
+		cmd := exec.Command("wl-copy", "-t", "text/uri-list", fmt.Sprintf("file://%s", paths[i]))
+
+		err := cmd.Start()
+		if err != nil {
+			slog.Error(Name, "actioncopyfile", err)
+		} else {
+			go func() {
+				cmd.Wait()
+			}()
+		}
 	default:
 		slog.Error(Name, "nosuchaction", action)
 	}
