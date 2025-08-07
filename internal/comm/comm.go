@@ -29,6 +29,8 @@ const (
 	ActionCleanup = "cleanup"
 	// activate;qid;files;identifier;action
 	ActionActivate = "activate"
+	// listproviders
+	ActionListProviders = "listproviders"
 )
 
 func StartListen() {
@@ -71,6 +73,12 @@ func handle(conn net.Conn, sid uint32) {
 		request := strings.Split(message, ";")
 
 		switch request[0] {
+		case ActionListProviders:
+			for k, v := range providers.Providers {
+				conn.Write(fmt.Appendf(nil, "provider;%s;%s\n", k, *v.NamePretty))
+			}
+
+			conn.Write(fmt.Appendf(nil, "provider;DONE\n"))
 		case ActionUnsubscribe:
 			if len(request) != 2 {
 				slog.Error("comm", "requestinvalid", message)

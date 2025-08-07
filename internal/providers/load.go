@@ -26,6 +26,15 @@ type Provider struct {
 	Query         func(qid uint32, iid uint32, text string) []common.Entry
 }
 
+type IProvider interface {
+	Load()
+	PrintDoc()
+	Cleanup(qid uint32)
+	EntryToString(common.Entry) string
+	Activate(qid uint32, identifier, action string)
+	Query(qid uint32, iid uint32, text string) []common.Entry
+}
+
 var Providers map[string]Provider
 
 func Load() {

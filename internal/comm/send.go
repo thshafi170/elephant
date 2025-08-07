@@ -29,6 +29,10 @@ func Send(req string) {
 	for scanner.Scan() {
 		text := scanner.Text()
 
+		if strings.Contains(text, "provider;DONE") {
+			break
+		}
+
 		if strings.Contains(text, "qid;") {
 			if strings.Contains(text, ";done") {
 				break
