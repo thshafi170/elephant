@@ -36,6 +36,7 @@ func Query(qid uint32, iid uint32, query string) []*pb.QueryResponse_Item {
 		e := &pb.QueryResponse_Item{
 			Identifier: i,
 			Text:       v,
+			Type:       pb.QueryResponse_REGULAR,
 			Subtext:    "",
 			Provider:   Name,
 		}
@@ -78,11 +79,11 @@ func Query(qid uint32, iid uint32, query string) []*pb.QueryResponse_Item {
 }
 
 func calcScore(q string, d string) (string, int32, []int32, int32, bool) {
-	var scoreRes int
-	var posRes *[]int
-	var startRes int
+	var scoreRes int32
+	var posRes []int32
+	var startRes int32
 	var match string
-	var modifier int
+	var modifier int32
 
 	score, pos, start := common.FuzzyScore(q, d)
 
@@ -100,12 +101,5 @@ func calcScore(q string, d string) (string, int32, []int32, int32, bool) {
 
 	scoreRes = max(scoreRes-min(modifier*10, 50)-startRes, 10)
 
-	intSlice := *posRes
-	int32Slice := make([]int32, len(intSlice))
-
-	for i, v := range intSlice {
-		int32Slice[i] = int32(v) // Explicit conversion
-	}
-
-	return match, int32(scoreRes), int32Slice, int32(startRes), true
+	return match, scoreRes, posRes, startRes, true
 }

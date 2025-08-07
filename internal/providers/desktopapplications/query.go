@@ -50,6 +50,7 @@ func Query(qid uint32, iid uint32, query string) []*pb.QueryResponse_Item {
 		e := &pb.QueryResponse_Item{
 			Identifier: k,
 			Text:       v.Name,
+			Type:       pb.QueryResponse_REGULAR,
 			Subtext:    v.GenericName,
 			Icon:       v.Icon,
 			Provider:   Name,
@@ -91,6 +92,7 @@ func Query(qid uint32, iid uint32, query string) []*pb.QueryResponse_Item {
 			e := &pb.QueryResponse_Item{
 				Identifier: fmt.Sprintf("%s:%s", k, a.Action),
 				Text:       a.Name,
+				Type:       pb.QueryResponse_REGULAR,
 				Subtext:    v.Name,
 				Icon:       a.Icon,
 				Provider:   Name,
@@ -167,11 +169,11 @@ func calcUsage(amount int, last time.Time) int32 {
 }
 
 func calcScore(q string, d *Data) (string, int32, []int32, int32, bool) {
-	var scoreRes int
-	var posRes *[]int
-	var startRes int
+	var scoreRes int32
+	var posRes []int32
+	var startRes int32
 	var match string
-	var modifier int
+	var modifier int32
 
 	for k, v := range []string{d.Name, d.Parent, d.GenericName, strings.Join(d.Keywords, ","), d.Comment} {
 		score, pos, start := common.FuzzyScore(q, v)
@@ -181,7 +183,7 @@ func calcScore(q string, d *Data) (string, int32, []int32, int32, bool) {
 			posRes = pos
 			startRes = start
 			match = v
-			modifier = k
+			modifier = int32(k)
 		}
 	}
 
@@ -191,12 +193,5 @@ func calcScore(q string, d *Data) (string, int32, []int32, int32, bool) {
 
 	scoreRes = max(scoreRes-min(modifier*10, 50)-startRes, 10)
 
-	intSlice := *posRes
-	int32Slice := make([]int32, len(intSlice))
-
-	for i, v := range intSlice {
-		int32Slice[i] = int32(v) // Explicit conversion
-	}
-
-	return match, int32(scoreRes), int32Slice, int32(startRes), true
+	return match, scoreRes, posRes, startRes, true
 }

@@ -12,10 +12,17 @@ func init() {
 	algo.Init("default")
 }
 
-func FuzzyScore(input, target string) (int, *[]int, int) {
+func FuzzyScore(input, target string) (int32, []int32, int32) {
 	runes := []rune(input)
 	chars := util.ToChars([]byte(target))
 	res, pos := algo.FuzzyMatchV2(slices.ContainsFunc(runes, unicode.IsUpper), true, true, &chars, runes, true, nil)
 
-	return res.Score, pos, res.Start
+	intSlice := *pos
+	int32Slice := make([]int32, len(intSlice))
+
+	for i, v := range intSlice {
+		int32Slice[i] = int32(v) // Explicit conversion
+	}
+
+	return int32(res.Score), int32Slice, int32(res.Start)
 }

@@ -15,6 +15,11 @@ message QueryResponse {
   int32 qid = 1;
   int32 iid = 2;
 
+  enum Type {
+      REGULAR = 0;
+      FILE = 1;
+  }
+
   message Item {
     message FuzzyInfo {
       int32 start = 1;
@@ -29,6 +34,8 @@ message QueryResponse {
 	string provider = 5;
 	int32 score = 6;
 	FuzzyInfo fuzzyinfo = 7;
+    Type type = 8;
+    string mimetype = 9;
   }
 
    Item item = 3;
