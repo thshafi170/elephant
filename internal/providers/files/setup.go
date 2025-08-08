@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -106,24 +105,4 @@ func Load() {
 	}
 
 	slog.Info(Name, "files", len(paths), "time", time.Since(start))
-}
-
-func EntryToString(e common.Entry) string {
-	var start int
-	var field string
-
-	positions := []string{}
-
-	if e.Fuzzy != nil {
-		if e.Fuzzy.Pos != nil {
-			for _, num := range *e.Fuzzy.Pos {
-				positions = append(positions, strconv.Itoa(num))
-			}
-		}
-
-		start = e.Fuzzy.Start
-		field = e.Fuzzy.Field
-	}
-
-	return fmt.Sprintf("%s;%s;%s;%s;%d;%s", e.Provider, e.Identifier, e.Text, strings.Join(positions, ","), start, field)
 }

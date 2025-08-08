@@ -11,31 +11,25 @@ import (
 	"sync"
 	"time"
 
+	"github.com/abenz1267/elephant/internal/comm/pb/pb"
 	"github.com/abenz1267/elephant/internal/common"
 	"github.com/charlievieth/fastwalk"
 )
 
 type Provider struct {
-	Name          *string
-	NamePretty    *string
-	Load          func()
-	PrintDoc      func()
-	Cleanup       func(qid uint32)
-	EntryToString func(common.Entry) string
-	Activate      func(qid uint32, identifier, action string)
-	Query         func(qid uint32, iid uint32, text string) []common.Entry
+	Name       *string
+	NamePretty *string
+	Load       func()
+	PrintDoc   func()
+	Cleanup    func(qid uint32)
+	Activate   func(qid uint32, identifier, action string)
+	Query      func(qid uint32, iid uint32, text string) []*pb.QueryResponse_Item
 }
 
-type IProvider interface {
-	Load()
-	PrintDoc()
-	Cleanup(qid uint32)
-	EntryToString(common.Entry) string
-	Activate(qid uint32, identifier, action string)
-	Query(qid uint32, iid uint32, text string) []common.Entry
-}
-
-var Providers map[string]Provider
+var (
+	Providers      map[string]Provider
+	QueryProviders map[uint32][]string
+)
 
 func Load() {
 	start := time.Now()
@@ -45,6 +39,7 @@ func Load() {
 	dirs := []string{filepath.Join(common.ConfigDir(), "providers"), "/etc/xdg/elephant/providers"}
 
 	Providers = make(map[string]Provider)
+	QueryProviders = make(map[uint32][]string)
 
 	for _, v := range dirs {
 		if !common.FileExists(v) {
@@ -86,11 +81,6 @@ func Load() {
 					slog.Error("providers", "load", err, "provider", path)
 				}
 
-				entryToStringFunc, err := p.Lookup("EntryToString")
-				if err != nil {
-					slog.Error("providers", "load", err, "provider", path)
-				}
-
 				activateFunc, err := p.Lookup("Activate")
 				if err != nil {
 					slog.Error("providers", "load", err, "provider", path)
@@ -112,14 +102,13 @@ func Load() {
 				}
 
 				provider := Provider{
-					Load:          loadFunc.(func()),
-					Name:          name.(*string),
-					EntryToString: entryToStringFunc.(func(common.Entry) string),
-					Cleanup:       cleanupFunc.(func(uint32)),
-					Activate:      activateFunc.(func(qid uint32, identifier, action string)),
-					Query:         queryFunc.(func(uint32, uint32, string) []common.Entry),
-					NamePretty:    namePretty.(*string),
-					PrintDoc:      printDocFunc.(func()),
+					Load:       loadFunc.(func()),
+					Name:       name.(*string),
+					Cleanup:    cleanupFunc.(func(uint32)),
+					Activate:   activateFunc.(func(qid uint32, identifier, action string)),
+					Query:      queryFunc.(func(uint32, uint32, string) []*pb.QueryResponse_Item),
+					NamePretty: namePretty.(*string),
+					PrintDoc:   printDocFunc.(func()),
 				}
 
 				Providers[*provider.Name] = provider

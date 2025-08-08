@@ -5,10 +5,10 @@ import (
 	"log/slog"
 	"os"
 	"slices"
-	"strconv"
 	"strings"
 	"time"
 
+	"github.com/abenz1267/elephant/internal/comm/pb/pb"
 	"github.com/abenz1267/elephant/internal/common"
 	"github.com/abenz1267/elephant/internal/providers"
 )
@@ -19,10 +19,10 @@ func init() {
 	results = providers.QueryData[map[string]*DesktopFile]{}
 }
 
-func Query(qid uint32, iid uint32, query string) []common.Entry {
+func Query(qid uint32, iid uint32, query string) []*pb.QueryResponse_Item {
 	start := time.Now()
 	desktop := os.Getenv("XDG_CURRENT_DESKTOP")
-	entries := []common.Entry{}
+	entries := []*pb.QueryResponse_Item{}
 
 	var toFilter map[string]*DesktopFile
 
@@ -47,10 +47,10 @@ func Query(qid uint32, iid uint32, query string) []common.Entry {
 		}
 
 		// check generic
-		e := common.Entry{
+		e := &pb.QueryResponse_Item{
 			Identifier: k,
 			Text:       v.Name,
-			SubText:    v.GenericName,
+			Subtext:    v.GenericName,
 			Icon:       v.Icon,
 			Provider:   Name,
 		}
@@ -59,15 +59,15 @@ func Query(qid uint32, iid uint32, query string) []common.Entry {
 		var ok bool
 
 		if query != "" {
-			e.Fuzzy = &common.FuzzyMatchInfo{
+			e.Fuzzyinfo = &pb.QueryResponse_Item_FuzzyInfo{
 				Field: "text",
 			}
 
-			match, e.Score, e.Fuzzy.Pos, e.Fuzzy.Start, ok = calcScore(query, &v.Data)
+			match, e.Score, e.Fuzzyinfo.Positions, e.Fuzzyinfo.Start, ok = calcScore(query, &v.Data)
 
 			if ok && match != e.Text {
-				e.SubText = match
-				e.Fuzzy.Field = "subtext"
+				e.Subtext = match
+				e.Fuzzyinfo.Field = "subtext"
 			}
 		}
 
@@ -88,10 +88,10 @@ func Query(qid uint32, iid uint32, query string) []common.Entry {
 
 		// check actions
 		for _, a := range v.Actions {
-			e := common.Entry{
+			e := &pb.QueryResponse_Item{
 				Identifier: fmt.Sprintf("%s:%s", k, a.Action),
 				Text:       a.Name,
-				SubText:    v.Name,
+				Subtext:    v.Name,
 				Icon:       a.Icon,
 				Provider:   Name,
 			}
@@ -100,15 +100,15 @@ func Query(qid uint32, iid uint32, query string) []common.Entry {
 			var ok bool
 
 			if query != "" {
-				e.Fuzzy = &common.FuzzyMatchInfo{
+				e.Fuzzyinfo = &pb.QueryResponse_Item_FuzzyInfo{
 					Field: "text",
 				}
 
-				match, e.Score, e.Fuzzy.Pos, e.Fuzzy.Start, ok = calcScore(query, &a)
+				match, e.Score, e.Fuzzyinfo.Positions, e.Fuzzyinfo.Start, ok = calcScore(query, &a)
 
 				if ok && match != e.Text {
-					e.SubText = match
-					e.Fuzzy.Field = "subtext"
+					e.Subtext = match
+					e.Fuzzyinfo.Field = "subtext"
 				}
 			}
 
@@ -142,7 +142,7 @@ func Query(qid uint32, iid uint32, query string) []common.Entry {
 	return entries
 }
 
-func calcUsage(amount int, last time.Time) int {
+func calcUsage(amount int, last time.Time) int32 {
 	base := 10
 
 	if amount > 0 {
@@ -160,13 +160,13 @@ func calcUsage(amount int, last time.Time) int {
 			res = 1
 		}
 
-		return res
+		return int32(res)
 	}
 
 	return 0
 }
 
-func calcScore(q string, d *Data) (string, int, *[]int, int, bool) {
+func calcScore(q string, d *Data) (string, int32, []int32, int32, bool) {
 	var scoreRes int
 	var posRes *[]int
 	var startRes int
@@ -191,25 +191,12 @@ func calcScore(q string, d *Data) (string, int, *[]int, int, bool) {
 
 	scoreRes = max(scoreRes-min(modifier*10, 50)-startRes, 10)
 
-	return match, scoreRes, posRes, startRes, true
-}
+	intSlice := *posRes
+	int32Slice := make([]int32, len(intSlice))
 
-func EntryToString(e common.Entry) string {
-	var start int
-	var field string
-
-	positions := []string{}
-
-	if e.Fuzzy != nil {
-		if e.Fuzzy.Pos != nil {
-			for _, num := range *e.Fuzzy.Pos {
-				positions = append(positions, strconv.Itoa(num))
-			}
-		}
-
-		start = e.Fuzzy.Start
-		field = e.Fuzzy.Field
+	for i, v := range intSlice {
+		int32Slice[i] = int32(v) // Explicit conversion
 	}
 
-	return fmt.Sprintf("%s;%s;%s;%s;%s;%s;%d;%s", e.Provider, e.Identifier, e.Text, e.SubText, e.Icon, strings.Join(positions, ","), start, field)
+	return match, int32(scoreRes), int32Slice, int32(startRes), true
 }

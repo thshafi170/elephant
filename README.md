@@ -8,6 +8,10 @@
 
 The project just started and is therefore highly wip.
 
+## Communication
+
+Communicating with `elephant` is done via unix-sockets and protobuf messages.
+
 ## Current Providers
 
 - `desktopapplications`
@@ -17,7 +21,7 @@ The project just started and is therefore highly wip.
 
 1. You need: `elephant`
 2. ... a provider
-3. something to make unix socket calls with
+3. something to make unix socket calls with (or use `elephant query/activate` for testing)
 
 ```
 mkdir ~/.config/elephant
@@ -29,53 +33,10 @@ go build -buildmode=plugin && cp desktopapplications.so ~/.config/elephant/provi
 
 Once you have this setup, you can start using `elephant`.
 
-### How to query:
+### Using `elephant` as client
 
-`qid = queryid, iid = iterationid`
+`elephant` has a built-in tiny client which is meant for testing purpose only.
 
-1. Open socket connection with f.e. `nc -U /tmp/elephant.sock`
-2. You can now query with: `query;desktopapplications;firefox`
-3. You'll retrieve a `qid;<qid>;<iid>`
-4. You'll retrieve a list of entries:
+Querying: `elephant query "files;somefile;5;false"` => the arguments position correlate to their respective protobuf file.
 
-```
-1;1;desktopapplications;/usr/share/applications/firefox-developer-edition.desktop;Firefox Developer Edition;Web Browser;firefox-developer-edition;6,5,4,3,2,1,0;0;text
-```
-
-To break this down:
-
-```
-QID;IID;PROVIDER;IDENTIFIER;TEXT;SUBTEXT;ICON;POSITIONS OF FUZZY MATCH;STARTING POSITION OF FUZZY MATCH;FUZZY MATCH FIELDNAME
-```
-
-### How to subscribe to changes:
-
-Subscribe to a query with an interval:
-
-```
-subscribe;1000;desktopapplications;foot
-```
-
-Subscribe to realtime data-changes of a provider:
-
-```
-subscribe;0;desktopapplications;
-```
-
-You'll retrieve `sid;100000001;changed` as status updates.
-
-You can unsubscribe again by doing `unsubscribe;100000001`.
-
-### How to activate:
-
-```
-activate;1;desktopapplications;firefox-developer-edition.desktop;
-```
-
-To break this down:
-
-```
-COMMAND;QID;PROVIDER;IDENTIFIER;ACTION
-```
-
-If there's no action, you'll still need a trailing `;`.
+Activating: `elephant activate "1;desktopapplications;/usr/share/applications/firefox-developer-edition.desktop:new-private-window;"`

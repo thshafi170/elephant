@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/abenz1267/elephant/internal/comm"
+	"github.com/abenz1267/elephant/internal/comm/client"
 	"github.com/abenz1267/elephant/internal/common"
 	"github.com/abenz1267/elephant/internal/providers"
 	"github.com/abenz1267/elephant/internal/util"
@@ -23,7 +24,6 @@ var version string
 
 func main() {
 	var config string
-	var socketrequest string
 	var debug bool
 
 	cmd := &cli.Command{
@@ -51,17 +51,28 @@ func main() {
 				},
 			},
 			{
-				Name:    "send",
-				Aliases: []string{"s"},
-				Usage:   "sends a request to the elephant service",
+				Name: "query",
 				Arguments: []cli.Argument{
 					&cli.StringArg{
-						Name:        "request",
-						Destination: &socketrequest,
+						Name: "content",
 					},
 				},
 				Action: func(ctx context.Context, cmd *cli.Command) error {
-					comm.Send(socketrequest)
+					client.Query(cmd.StringArg("content"))
+
+					return nil
+				},
+			},
+			{
+				Name: "activate",
+				Arguments: []cli.Argument{
+					&cli.StringArg{
+						Name: "content",
+					},
+				},
+				Action: func(ctx context.Context, cmd *cli.Command) error {
+					client.Activate(cmd.StringArg("content"))
+
 					return nil
 				},
 			},

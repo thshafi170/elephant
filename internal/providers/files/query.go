@@ -5,12 +5,13 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/abenz1267/elephant/internal/comm/pb/pb"
 	"github.com/abenz1267/elephant/internal/common"
 )
 
-func Query(qid uint32, iid uint32, query string) []common.Entry {
+func Query(qid uint32, iid uint32, query string) []*pb.QueryResponse_Item {
 	start := time.Now()
-	entries := []common.Entry{}
+	entries := []*pb.QueryResponse_Item{}
 
 	var toFilter []string
 
@@ -32,10 +33,10 @@ func Query(qid uint32, iid uint32, query string) []common.Entry {
 
 		i := strconv.Itoa(k)
 
-		e := common.Entry{
+		e := &pb.QueryResponse_Item{
 			Identifier: i,
 			Text:       v,
-			SubText:    "",
+			Subtext:    "",
 			Provider:   Name,
 		}
 
@@ -43,15 +44,15 @@ func Query(qid uint32, iid uint32, query string) []common.Entry {
 		var ok bool
 
 		if query != "" {
-			e.Fuzzy = &common.FuzzyMatchInfo{
+			e.Fuzzyinfo = &pb.QueryResponse_Item_FuzzyInfo{
 				Field: "text",
 			}
 
-			match, e.Score, e.Fuzzy.Pos, e.Fuzzy.Start, ok = calcScore(query, v)
+			match, e.Score, e.Fuzzyinfo.Positions, e.Fuzzyinfo.Start, ok = calcScore(query, v)
 
 			if ok && match != e.Text {
-				e.SubText = match
-				e.Fuzzy.Field = "text"
+				e.Subtext = match
+				e.Fuzzyinfo.Field = "text"
 			}
 		}
 
@@ -76,7 +77,7 @@ func Query(qid uint32, iid uint32, query string) []common.Entry {
 	return entries
 }
 
-func calcScore(q string, d string) (string, int, *[]int, int, bool) {
+func calcScore(q string, d string) (string, int32, []int32, int32, bool) {
 	var scoreRes int
 	var posRes *[]int
 	var startRes int
@@ -99,5 +100,12 @@ func calcScore(q string, d string) (string, int, *[]int, int, bool) {
 
 	scoreRes = max(scoreRes-min(modifier*10, 50)-startRes, 10)
 
-	return match, scoreRes, posRes, startRes, true
+	intSlice := *posRes
+	int32Slice := make([]int32, len(intSlice))
+
+	for i, v := range intSlice {
+		int32Slice[i] = int32(v) // Explicit conversion
+	}
+
+	return match, int32(scoreRes), int32Slice, int32(startRes), true
 }

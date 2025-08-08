@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/abenz1267/elephant/internal/providers"
+	"github.com/abenz1267/elephant/internal/comm/handlers"
 	"github.com/adrg/xdg"
 	"github.com/charlievieth/fastwalk"
 	"github.com/fsnotify/fsnotify"
@@ -194,7 +194,7 @@ func handleFileEvent(event fsnotify.Event) {
 		handleFileRemove(event.Name)
 	}
 
-	providers.ProviderUpdated <- Name
+	handlers.ProviderUpdated <- Name
 }
 
 func handleFileCreate(path string) {

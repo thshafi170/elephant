@@ -9,15 +9,16 @@ import (
 )
 
 type timestamps struct {
-	data map[uint32]time.Time
+	Data map[uint32]time.Time
 	sync.Mutex
 }
 
-var timestampedqueries *timestamps
+// this is used to auto-clean query data
+var Timestampedqueries *timestamps
 
 func init() {
-	timestampedqueries = &timestamps{
-		data: make(map[uint32]time.Time),
+	Timestampedqueries = &timestamps{
+		Data: make(map[uint32]time.Time),
 	}
 
 	go func() {
@@ -26,13 +27,13 @@ func init() {
 
 			now := time.Now()
 
-			for k, v := range timestampedqueries.data {
+			for k, v := range Timestampedqueries.Data {
 				if now.Sub(v).Seconds() > 60 {
 					Cleanup(k)
 
-					timestampedqueries.Lock()
-					delete(timestampedqueries.data, k)
-					timestampedqueries.Unlock()
+					Timestampedqueries.Lock()
+					delete(Timestampedqueries.Data, k)
+					Timestampedqueries.Unlock()
 				}
 			}
 
@@ -45,7 +46,7 @@ func init() {
 func Cleanup(qid uint32) {
 	slog.Info("providers", "cleanup", qid)
 
-	for _, v := range queryProviders[qid] {
+	for _, v := range QueryProviders[qid] {
 		Providers[v].Cleanup(qid)
 	}
 }

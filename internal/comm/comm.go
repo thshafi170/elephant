@@ -2,36 +2,38 @@
 package comm
 
 import (
-	"bufio"
-	"fmt"
+	"encoding/binary"
+	"io"
 	"log/slog"
 	"net"
 	"os"
 	"path/filepath"
-	"strconv"
-	"strings"
 
-	"github.com/abenz1267/elephant/internal/providers"
+	"github.com/abenz1267/elephant/internal/comm/handlers"
 )
 
 // connection id
 var cid uint32
 
+var registry []MessageHandler
+
+type MessageHandler interface {
+	Handle(cid uint32, conn net.Conn, data []byte)
+}
+
 const (
-	// query;files;somefile
-	ActionQuery = "query"
-	// subscribe;0;files;
-	// subscribe;1000;files;somefile
-	ActionSubscribe = "subscribe"
-	// unsubscribe;100001
-	ActionUnsubscribe = "unsubscribe"
-	// cleanup;qid
-	ActionCleanup = "cleanup"
-	// activate;qid;files;identifier;action
-	ActionActivate = "activate"
-	// listproviders
-	ActionListProviders = "listproviders"
+	QueryRequestHandlerPos     = 0
+	ActivateRequestHandlerPos  = 1
+	SubscribeRequestHandlerPos = 2
 )
+
+func init() {
+	registry = make([]MessageHandler, 255)
+
+	registry[QueryRequestHandlerPos] = &handlers.QueryRequest{}
+	registry[ActivateRequestHandlerPos] = &handlers.ActivateRequest{}
+	registry[SubscribeRequestHandlerPos] = &handlers.SubscribeRequest{}
+}
 
 func StartListen() {
 	file := filepath.Join(os.TempDir(), "elephant.sock")
@@ -61,106 +63,36 @@ func StartListen() {
 	}
 }
 
-func handle(conn net.Conn, sid uint32) {
+func handle(conn net.Conn, cid uint32) {
 	defer conn.Close()
 
-	scanner := bufio.NewScanner(conn)
-
-	for scanner.Scan() {
-		message := scanner.Text()
-		slog.Info("comm", "request", message)
-
-		request := strings.Split(message, ";")
-
-		switch request[0] {
-		case ActionListProviders:
-			for k, v := range providers.Providers {
-				conn.Write(fmt.Appendf(nil, "provider;%s;%s\n", k, *v.NamePretty))
+	for {
+		tb := make([]byte, 1)
+		if _, err := io.ReadFull(conn, tb); err != nil {
+			if err == io.EOF {
+				break
 			}
 
-			conn.Write(fmt.Appendf(nil, "provider;DONE\n"))
-		case ActionUnsubscribe:
-			if len(request) != 2 {
-				slog.Error("comm", "requestinvalid", message)
-				conn.Write(fmt.Appendf(nil, "error: invalid unsubscribe request '%s'\n", message))
-				continue
-			}
-
-			sid, err := strconv.ParseUint(request[1], 10, 32)
-			if err != nil {
-				slog.Error("comm", "requestinvalid", message)
-				conn.Write(fmt.Appendf(nil, "error: invalid cleanup request '%s'\n", message))
-				continue
-			}
-
-			providers.Unsubscribe(uint32(sid))
-		case ActionSubscribe:
-			if len(request) != 4 {
-				slog.Error("comm", "requestinvalid", message)
-				conn.Write(fmt.Appendf(nil, "error: invalid subscribe request '%s'\n", message))
-				continue
-			}
-
-			interval, err := strconv.Atoi(request[1])
-			if err != nil {
-				slog.Error("comm", "requestinvalid", message)
-				conn.Write(fmt.Appendf(nil, "error: invalid subscribe request '%s'\n", message))
-				continue
-			}
-
-			if interval == 0 && request[3] != "" {
-				slog.Error("comm", "requestinvalid", message)
-				conn.Write(fmt.Appendf(nil, "error: invalid subscribe request '%s'\n", message))
-				continue
-			}
-
-			go providers.Subscribe(interval, request[2], request[3], conn)
-		case ActionQuery:
-			if len(request) != 3 {
-				slog.Error("comm", "requestinvalid", message)
-				conn.Write(fmt.Appendf(nil, "error: invalid query request '%s'\n", message))
-				continue
-			}
-
-			go providers.Query(sid, strings.Fields(request[1]), request[2], conn)
-		case ActionCleanup:
-			if len(request) != 2 {
-				slog.Error("comm", "requestinvalid", message)
-				conn.Write(fmt.Appendf(nil, "error: invalid cleanup request '%s'\n", message))
-				continue
-			}
-
-			qid, err := strconv.ParseUint(request[1], 10, 32)
-			if err != nil {
-				slog.Error("comm", "requestinvalid", message)
-				conn.Write(fmt.Appendf(nil, "error: invalid cleanup request '%s'\n", message))
-				continue
-			}
-
-			providers.Cleanup(uint32(qid))
-		case ActionActivate:
-			if len(request) != 5 {
-				slog.Error("comm", "requestinvalid", message)
-				conn.Write(fmt.Appendf(nil, "error: invalid activate request '%s'\n", message))
-				continue
-			}
-
-			qid, err := strconv.ParseUint(request[1], 10, 32)
-			if err != nil {
-				slog.Error("comm", "requestinvalid", message)
-				conn.Write(fmt.Appendf(nil, "error: invalid activate request '%s'\n", message))
-				continue
-			}
-
-			providers.Activate(sid, uint32(qid), request[2], request[3], request[4])
-			conn.Write(fmt.Appendf(nil, "qid;%d;done\n", qid))
-		default:
-			slog.Error("comm", "requestinvalid", request[0])
-			conn.Write(fmt.Appendf(nil, "error: invalid action '%s'\n", request[0]))
+			slog.Error("conn", "readtype", err)
+			continue
 		}
-	}
 
-	if err := scanner.Err(); err != nil {
-		slog.Error("comm", "request", err)
+		mType := int(tb[0])
+
+		lb := make([]byte, 4)
+		if _, err := io.ReadFull(conn, lb); err != nil {
+			slog.Error("conn", "readlength", err)
+			continue
+		}
+
+		l := binary.BigEndian.Uint32(lb)
+
+		p := make([]byte, l)
+		if _, err := io.ReadFull(conn, p); err != nil {
+			slog.Error("conn", "readpayload", err)
+			continue
+		}
+
+		registry[mType].Handle(cid, conn, p)
 	}
 }
