@@ -17,11 +17,17 @@ func FuzzyScore(input, target string) (int32, []int32, int32) {
 	chars := util.ToChars([]byte(target))
 	res, pos := algo.FuzzyMatchV2(slices.ContainsFunc(runes, unicode.IsUpper), true, true, &chars, runes, true, nil)
 
-	intSlice := *pos
-	int32Slice := make([]int32, len(intSlice))
+	var int32Slice []int32
 
-	for i, v := range intSlice {
-		int32Slice[i] = int32(v) // Explicit conversion
+	if pos != nil {
+		intSlice := *pos
+		int32Slice = make([]int32, len(intSlice))
+
+		for i, v := range intSlice {
+			int32Slice[i] = int32(v) // Explicit conversion
+		}
+	} else {
+		int32Slice = make([]int32, 0)
 	}
 
 	return int32(res.Score), int32Slice, int32(res.Start)

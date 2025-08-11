@@ -123,6 +123,10 @@ jobs:
         tar -czf files-linux-amd64.tar.gz files-linux-amd64.so
         tar -czf files-linux-arm64.tar.gz files-linux-arm64.so
 
+        # Archive files plugin
+        tar -czf clipboard-linux-amd64.tar.gz clipboard-linux-amd64.so
+        tar -czf clipboard-linux-arm64.tar.gz clipboard-linux-arm64.so
+
         echo "Build completed successfully!"
         echo "Created archives:"
         ls -la *.tar.gz
