@@ -41,6 +41,23 @@ func main() {
 				},
 			},
 			{
+				Name:    "listproviders",
+				Aliases: []string{"d"},
+				Usage:   "lists all installed providers",
+				Action: func(ctx context.Context, cmd *cli.Command) error {
+					logger := slog.New(slog.DiscardHandler)
+					slog.SetDefault(logger)
+
+					providers.Load()
+
+					for _, v := range providers.Providers {
+						fmt.Printf("%s:%s\n", *v.NamePretty, *v.Name)
+					}
+
+					return nil
+				},
+			},
+			{
 				Name:    "generatedoc",
 				Aliases: []string{"d"},
 				Usage:   "generates a markdown documentation",
