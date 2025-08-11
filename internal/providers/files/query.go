@@ -41,20 +41,12 @@ func Query(qid uint32, iid uint32, query string) []*pb.QueryResponse_Item {
 			Provider:   Name,
 		}
 
-		var match string
-		var ok bool
-
 		if query != "" {
 			e.Fuzzyinfo = &pb.QueryResponse_Item_FuzzyInfo{
 				Field: "text",
 			}
 
-			match, e.Score, e.Fuzzyinfo.Positions, e.Fuzzyinfo.Start, ok = calcScore(query, v)
-
-			if ok && match != e.Text {
-				e.Subtext = match
-				e.Fuzzyinfo.Field = "text"
-			}
+			e.Score, e.Fuzzyinfo.Positions, e.Fuzzyinfo.Start = common.FuzzyScore(query, e.Text)
 		}
 
 		if e.Score > 0 || query == "" {
