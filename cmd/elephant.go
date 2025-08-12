@@ -69,13 +69,21 @@ func main() {
 			},
 			{
 				Name: "query",
+				Flags: []cli.Flag{
+					&cli.BoolFlag{
+						Name:        "async",
+						Category:    "",
+						DefaultText: "run async, close manually",
+						Usage:       "use to not close after querying, in case of async querying.",
+					},
+				},
 				Arguments: []cli.Argument{
 					&cli.StringArg{
 						Name: "content",
 					},
 				},
 				Action: func(ctx context.Context, cmd *cli.Command) error {
-					client.Query(cmd.StringArg("content"))
+					client.Query(cmd.StringArg("content"), cmd.Bool("async"))
 
 					return nil
 				},

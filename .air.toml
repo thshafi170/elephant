@@ -3,7 +3,7 @@ tmp_dir = "tmp"
 
 [build]
 # Just plain old shell command. You could use `make` as well.
-cmd = "cd cmd && go build -o /tmp/elephant-air . && cd ../internal/providers/files && go build -buildmode=plugin && cp files.so /home/andrej/.config/elephant/providers/ && cd ../desktopapplications && go build -buildmode=plugin && cp desktopapplications.so /home/andrej/.config/elephant/providers/ && cd ../clipboard && go build -buildmode=plugin && cp clipboard.so /home/andrej/.config/elephant/providers/ && cd ../runner && go build -buildmode=plugin && cp runner.so /home/andrej/.config/elephant/providers/ && cd ../symbols && go build -buildmode=plugin && cp symbols.so /home/andrej/.config/elephant/providers/"
+cmd = "cd cmd && go build -o /tmp/elephant-air . && cd ../internal/providers/files && go build -buildmode=plugin && cp files.so /home/andrej/.config/elephant/providers/ && cd ../desktopapplications && go build -buildmode=plugin && cp desktopapplications.so /home/andrej/.config/elephant/providers/ && cd ../clipboard && go build -buildmode=plugin && cp clipboard.so /home/andrej/.config/elephant/providers/ && cd ../runner && go build -buildmode=plugin && cp runner.so /home/andrej/.config/elephant/providers/ && cd ../symbols && go build -buildmode=plugin && cp symbols.so /home/andrej/.config/elephant/providers/ && cd ../calc && go build -buildmode=plugin && cp calc.so /home/andrej/.config/elephant/providers/"
 # pre_cmd = [
 #   "cp internal/providers/files/files.so ",
 #   "cp internal/providers/desktopapplications/desktopapplications.so ",

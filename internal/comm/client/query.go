@@ -15,7 +15,7 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func Query(data string) {
+func Query(data string, async bool) {
 	v := strings.Split(data, ";")
 	maxresults, _ := strconv.Atoi(v[2])
 
@@ -60,11 +60,11 @@ func Query(data string) {
 			panic(err)
 		}
 
-		if header[0] == done {
+		if !async && header[0] == done {
 			break
 		}
 
-		if header[0] != 0 {
+		if header[0] != 0 && header[0] != 1 && header[0] != done {
 			panic("invalid protocol prefix")
 		}
 

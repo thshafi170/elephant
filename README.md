@@ -19,6 +19,7 @@ Communicating with `elephant` is done via unix-sockets and protobuf messages.
 - `clipboard`
 - `runner`
 - `symbols/emojis`
+- `calc/unit-conversion`
 
 ## Quick-Guide
 

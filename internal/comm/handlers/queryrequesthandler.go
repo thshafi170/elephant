@@ -20,6 +20,7 @@ const (
 	QueryDone      = 255
 	QueryNoResults = 254
 	QueryItem      = 0
+	QueryAsyncItem = 1
 )
 
 type queryData struct {
@@ -29,13 +30,38 @@ type queryData struct {
 }
 
 var (
-	qid        atomic.Uint32
-	queries    map[uint32]map[uint32]*queryData
-	queryMutex sync.Mutex
+	qid           atomic.Uint32
+	queries       = make(map[uint32]map[uint32]*queryData)
+	AsyncChannels = make(map[uint32]map[uint32]chan *pb.QueryResponse_Item)
+	queryMutex    sync.Mutex
 )
 
-func init() {
-	queries = make(map[uint32]map[uint32]*queryData)
+func handleAsync(qid, iid uint32, conn net.Conn) {
+	for item := range AsyncChannels[qid][iid] {
+		req := pb.QueryResponse{
+			Qid:  int32(qid),
+			Iid:  int32(iid),
+			Item: item,
+		}
+
+		b, err := proto.Marshal(&req)
+		if err != nil {
+			panic(err)
+		}
+
+		var buffer bytes.Buffer
+		buffer.Write([]byte{QueryAsyncItem})
+
+		lengthBuf := make([]byte, 4)
+		binary.BigEndian.PutUint32(lengthBuf, uint32(len(b)))
+		buffer.Write(lengthBuf)
+		buffer.Write(b)
+
+		_, err = conn.Write(buffer.Bytes())
+		if err != nil {
+			slog.Error("queryhandler", "async", err)
+		}
+	}
 }
 
 type QueryRequest struct{}
@@ -104,6 +130,14 @@ func (h *QueryRequest) Handle(cid uint32, conn net.Conn, data []byte) {
 	providers.Timestampedqueries.Data[currentQID] = time.Now()
 
 	entries := []*pb.QueryResponse_Item{}
+
+	if _, ok := AsyncChannels[currentQID]; !ok {
+		AsyncChannels[currentQID] = make(map[uint32]chan *pb.QueryResponse_Item)
+	}
+
+	AsyncChannels[currentQID][currentIteration] = make(chan *pb.QueryResponse_Item)
+
+	go handleAsync(currentQID, currentIteration, conn)
 
 	for _, v := range req.Providers {
 		go func(text string, wg *sync.WaitGroup) {
