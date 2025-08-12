@@ -197,7 +197,33 @@ func PrintDoc() {
 
 func Cleanup(qid uint32) {}
 
-func Activate(qid uint32, identifier, action string, arguments string) {}
+const ActionCopy = "copy"
+
+func Activate(qid uint32, identifier, action string, arguments string) {
+	switch action {
+	case ActionCopy:
+		cmd := exec.Command("wl-copy")
+
+		item := history[identifier]
+		if item.Img != "" {
+			f, _ := os.ReadFile(item.Img)
+			cmd.Stdin = bytes.NewReader(f)
+		} else {
+			cmd.Stdin = strings.NewReader(item.Content)
+		}
+
+		err := cmd.Start()
+		if err != nil {
+			slog.Error("clipboard", "activate", err)
+		} else {
+			go func() {
+				cmd.Wait()
+			}()
+		}
+	default:
+		slog.Error(Name, "activate", fmt.Sprintf("no such action '%s'", action))
+	}
+}
 
 func Query(qid uint32, iid uint32, text string) []*pb.QueryResponse_Item {
 	entries := []*pb.QueryResponse_Item{}
