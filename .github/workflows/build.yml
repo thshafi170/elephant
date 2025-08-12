@@ -79,6 +79,16 @@ jobs:
         echo "Building clipboard plugin for linux/arm64..."
         GOOS=linux GOARCH=arm64 CGO_ENABLED=1 CC=aarch64-linux-gnu-gcc go build -buildmode=plugin -o build/clipboard-linux-arm64.so ./internal/providers/clipboard
 
+    - name: Build runner plugin for linux/amd64
+      run: |
+        echo "Building runner plugin for linux/amd64..."
+        GOOS=linux GOARCH=amd64 CGO_ENABLED=1 go build -buildmode=plugin -o build/runner-linux-amd64.so ./internal/providers/runner
+
+    - name: Build runner plugin for linux/arm64
+      run: |
+        echo "Building runner plugin for linux/arm64..."
+        GOOS=linux GOARCH=arm64 CGO_ENABLED=1 CC=aarch64-linux-gnu-gcc go build -buildmode=plugin -o build/runner-linux-arm64.so ./internal/providers/runner
+
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
@@ -123,9 +133,13 @@ jobs:
         tar -czf files-linux-amd64.tar.gz files-linux-amd64.so
         tar -czf files-linux-arm64.tar.gz files-linux-arm64.so
 
-        # Archive files plugin
+        # Archive clipboard plugin
         tar -czf clipboard-linux-amd64.tar.gz clipboard-linux-amd64.so
         tar -czf clipboard-linux-arm64.tar.gz clipboard-linux-arm64.so
+
+        # Archive runner plugin
+        tar -czf runner-linux-amd64.tar.gz runner-linux-amd64.so
+        tar -czf runner-linux-arm64.tar.gz runner-linux-arm64.so
 
         echo "Build completed successfully!"
         echo "Created archives:"

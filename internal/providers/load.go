@@ -23,7 +23,7 @@ type Provider struct {
 	PrintDoc   func()
 	Cleanup    func(qid uint32)
 	Activate   func(qid uint32, identifier, action string, arguments string)
-	Query      func(qid uint32, iid uint32, text string) []*pb.QueryResponse_Item
+	Query      func(qid uint32, iid uint32, query string) []*pb.QueryResponse_Item
 }
 
 var (

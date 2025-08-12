@@ -69,29 +69,3 @@ func Query(qid uint32, iid uint32, query string) []*pb.QueryResponse_Item {
 	slog.Info(Name, "queryresult", len(entries), "time", time.Since(start))
 	return entries
 }
-
-func calcScore(q string, d string) (string, int32, []int32, int32, bool) {
-	var scoreRes int32
-	var posRes []int32
-	var startRes int32
-	var match string
-	var modifier int32
-
-	score, pos, start := common.FuzzyScore(q, d)
-
-	if score > scoreRes {
-		scoreRes = score
-		posRes = pos
-		startRes = start
-		match = d
-		modifier = 0
-	}
-
-	if scoreRes == 0 {
-		return "", 0, nil, 0, false
-	}
-
-	scoreRes = max(scoreRes-min(modifier*10, 50)-startRes, 10)
-
-	return match, scoreRes, posRes, startRes, true
-}

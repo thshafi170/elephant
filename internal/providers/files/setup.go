@@ -9,7 +9,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/abenz1267/elephant/internal/common"
@@ -20,10 +19,9 @@ import (
 )
 
 var (
-	paths        []string
-	results      providers.QueryData[[]string]
-	resultsMutex sync.Mutex
-	terminal     string
+	paths    []string
+	results  providers.QueryData[[]string]
+	terminal string
 )
 
 var terminalApps map[string]struct{}
@@ -48,9 +46,9 @@ func PrintDoc() {
 
 func Cleanup(qid uint32) {
 	slog.Info(Name, "cleanup", qid)
-	resultsMutex.Lock()
+	results.Lock()
 	delete(results.Queries, qid)
-	resultsMutex.Unlock()
+	results.Unlock()
 }
 
 func findTerminalApps() {
