@@ -28,6 +28,7 @@ type Provider struct {
 var (
 	Providers      map[string]Provider
 	QueryProviders map[uint32][]string
+	AsyncChannels  = make(map[uint32]map[uint32]chan *pb.QueryResponse_Item)
 )
 
 func Load() {

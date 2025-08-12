@@ -30,14 +30,13 @@ type queryData struct {
 }
 
 var (
-	qid           atomic.Uint32
-	queries       = make(map[uint32]map[uint32]*queryData)
-	AsyncChannels = make(map[uint32]map[uint32]chan *pb.QueryResponse_Item)
-	queryMutex    sync.Mutex
+	qid        atomic.Uint32
+	queries    = make(map[uint32]map[uint32]*queryData)
+	queryMutex sync.Mutex
 )
 
 func handleAsync(qid, iid uint32, conn net.Conn) {
-	for item := range AsyncChannels[qid][iid] {
+	for item := range providers.AsyncChannels[qid][iid] {
 		req := pb.QueryResponse{
 			Qid:  int32(qid),
 			Iid:  int32(iid),
@@ -131,11 +130,11 @@ func (h *QueryRequest) Handle(cid uint32, conn net.Conn, data []byte) {
 
 	entries := []*pb.QueryResponse_Item{}
 
-	if _, ok := AsyncChannels[currentQID]; !ok {
-		AsyncChannels[currentQID] = make(map[uint32]chan *pb.QueryResponse_Item)
+	if _, ok := providers.AsyncChannels[currentQID]; !ok {
+		providers.AsyncChannels[currentQID] = make(map[uint32]chan *pb.QueryResponse_Item)
 	}
 
-	AsyncChannels[currentQID][currentIteration] = make(chan *pb.QueryResponse_Item)
+	providers.AsyncChannels[currentQID][currentIteration] = make(chan *pb.QueryResponse_Item)
 
 	go handleAsync(currentQID, currentIteration, conn)
 

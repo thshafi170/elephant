@@ -6,8 +6,6 @@ import (
 	"runtime/debug"
 	"sync"
 	"time"
-
-	"github.com/abenz1267/elephant/internal/comm/handlers"
 )
 
 type timestamps struct {
@@ -48,11 +46,11 @@ func init() {
 func Cleanup(qid uint32) {
 	slog.Info("providers", "cleanup", qid)
 
-	for _, v := range handlers.AsyncChannels[qid] {
+	for _, v := range AsyncChannels[qid] {
 		close(v)
 	}
 
-	delete(handlers.AsyncChannels, qid)
+	delete(AsyncChannels, qid)
 
 	for _, v := range QueryProviders[qid] {
 		Providers[v].Cleanup(qid)
