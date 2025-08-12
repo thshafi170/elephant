@@ -121,15 +121,19 @@ func Load(provider string) *History {
 		Provider: provider,
 	}
 
-	f, err := os.ReadFile(common.CacheFile(fmt.Sprintf("%s_history.gob", provider)))
-	if err != nil {
-		slog.Error("history", "load", err)
-	} else {
-		decoder := gob.NewDecoder(bytes.NewReader(f))
+	file := common.CacheFile(fmt.Sprintf("%s_history.gob", provider))
 
-		err = decoder.Decode(&h)
+	if common.FileExists(file) {
+		f, err := os.ReadFile(file)
 		if err != nil {
-			slog.Error("history", "decoding", err)
+			slog.Error("history", "load", err)
+		} else {
+			decoder := gob.NewDecoder(bytes.NewReader(f))
+
+			err = decoder.Decode(&h)
+			if err != nil {
+				slog.Error("history", "decoding", err)
+			}
 		}
 	}
 
