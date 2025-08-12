@@ -17,6 +17,8 @@ Communicating with `elephant` is done via unix-sockets and protobuf messages.
 - `desktopapplications`
 - `files`
 - `clipboard`
+- `runner`
+- `symbols/emojis`
 
 ## Quick-Guide
 
