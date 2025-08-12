@@ -35,10 +35,28 @@ type Item struct {
 	Time     time.Time
 }
 
+type Config struct {
+	common.Config `koanf:",squash"`
+	MaxItems      int `koanf:"max_items" desc:"max amount of clipboard history items" default:"100"`
+}
+
+var config *Config
+
+func loadConfig() {
+	config = &Config{
+		Config:   common.Config{},
+		MaxItems: 100,
+	}
+
+	common.LoadConfig(Name, config)
+}
+
 // hash => item
 var history map[string]Item
 
 func Load() {
+	loadConfig()
+
 	imgTypes["image/png"] = "png"
 	imgTypes["image/jpg"] = "jpg"
 	imgTypes["image/jpeg"] = "jpeg"
@@ -163,7 +181,32 @@ func update() {
 		}
 	}
 
+	if len(history) > config.MaxItems {
+		trim()
+		saveToFile()
+
+		return
+	}
+
 	saveToFile()
+}
+
+func trim() {
+	oldest := ""
+	oldestTime := time.Now()
+
+	for k, v := range history {
+		if v.Time.Before(oldestTime) {
+			oldest = k
+			oldestTime = v.Time
+		}
+	}
+
+	if history[oldest].Img != "" {
+		_ = os.Remove(history[oldest].Img)
+	}
+
+	delete(history, oldest)
 }
 
 func saveImg(b []byte, ext string) string {
