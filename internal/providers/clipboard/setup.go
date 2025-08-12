@@ -56,6 +56,7 @@ func loadConfig() {
 var history map[string]Item
 
 func Load() {
+	start := time.Now()
 	loadConfig()
 
 	imgTypes["image/png"] = "png"
@@ -65,6 +66,8 @@ func Load() {
 	loadFromFile()
 
 	go handleChange()
+
+	slog.Info(Name, "history", len(history), "time", time.Since(start))
 }
 
 func loadFromFile() {

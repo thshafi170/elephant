@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/abenz1267/elephant/internal/comm/pb/pb"
 	"github.com/abenz1267/elephant/internal/common"
@@ -24,6 +25,7 @@ var (
 var bins = []string{}
 
 func Load() {
+	start := time.Now()
 	for p := range strings.SplitSeq(os.Getenv("PATH"), ":") {
 		filepath.WalkDir(p, func(path string, d fs.DirEntry, err error) error {
 			if d != nil && d.IsDir() {
@@ -42,6 +44,8 @@ func Load() {
 			return nil
 		})
 	}
+
+	slog.Info(Name, "executables", len(bins), "time", time.Since(start))
 }
 
 func PrintDoc() {
