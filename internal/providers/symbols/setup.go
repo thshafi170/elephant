@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/abenz1267/elephant/internal/common"
+	"github.com/abenz1267/elephant/internal/common/history"
 	"github.com/abenz1267/elephant/internal/providers"
 	"github.com/abenz1267/elephant/internal/util"
 	"github.com/abenz1267/elephant/pkg/pb/pb"
@@ -19,19 +20,22 @@ import (
 var (
 	Name       = "symbols"
 	NamePretty = "Symbols/Emojis"
+	h          = history.Load(Name)
 )
 
 type Config struct {
 	common.Config `koanf:",squash"`
 	Locale        string `koanf:"locale" desc:"locale to use for symbols" default:"en"`
+	History       bool   `koanf:"history" desc:"make use of history for sorting" default:"false"`
 }
 
 var config *Config
 
 func loadConfig() {
 	config = &Config{
-		Config: common.Config{},
-		Locale: "en",
+		Config:  common.Config{},
+		Locale:  "en",
+		History: true,
 	}
 
 	common.LoadConfig(Name, config)
@@ -83,6 +87,20 @@ func Activate(qid uint32, identifier, action string, arguments string) {
 		go func() {
 			cmd.Wait()
 		}()
+	}
+
+	if config.History {
+		var last uint32
+
+		for k := range results.Queries[qid] {
+			if k > last {
+				last = k
+			}
+		}
+
+		if last != 0 {
+			h.Save(results.Queries[qid][last].Query, identifier)
+		}
 	}
 }
 
@@ -145,18 +163,42 @@ func Query(qid uint32, iid uint32, query string) []*pb.QueryResponse_Item {
 			e.Score = bestScore
 			e.Subtext = bestText
 
-			if e.Score > 0 || query == "" {
-				if query != "" {
-					results.Lock()
-					results.Queries[qid][iid].Results[k] = v
-					results.Unlock()
-				}
+		}
 
-				entries = append(entries, e)
+		usage, lastUsed := h.FindUsage(query, e.Identifier)
+		e.Score = e.Score + calcUsage(usage, lastUsed)
+
+		if usage != 0 || e.Score > 0 || query == "" {
+			if query != "" {
+				results.Lock()
+				results.Queries[qid][iid].Results[k] = v
+				results.Unlock()
 			}
+
+			entries = append(entries, e)
 		}
 	}
 
 	slog.Info(Name, "queryresult", len(entries), "time", time.Since(start))
 	return entries
+}
+
+func calcUsage(amount int, last time.Time) int32 {
+	base := 10
+
+	if amount > 0 {
+		today := time.Now()
+		duration := today.Sub(last)
+		days := int(duration.Hours() / 24)
+
+		if days > 0 {
+			base -= days
+		}
+
+		res := max(base*amount, 1)
+
+		return int32(res)
+	}
+
+	return 0
 }

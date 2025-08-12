@@ -156,11 +156,7 @@ func calcUsage(amount int, last time.Time) int32 {
 			base -= days
 		}
 
-		res := base * amount
-
-		if res < 1 {
-			res = 1
-		}
+		res := max(base*amount, 1)
 
 		return int32(res)
 	}
