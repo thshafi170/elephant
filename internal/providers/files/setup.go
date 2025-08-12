@@ -20,21 +20,53 @@ import (
 
 var (
 	paths    []string
-	results  providers.QueryData[[]string]
+	results  = providers.QueryData[[]string]{}
 	terminal string
 )
 
-var terminalApps map[string]struct{}
+var terminalApps = make(map[string]struct{})
 
 var (
 	Name       = "files"
 	NamePretty = "Files"
+	config     *Config
 )
 
+type Config struct {
+	common.Config `koanf:",squash"`
+	LaunchPrefix  string `koanf:"launch_prefix" desc:"overrides the default app2unit or uwsm prefix, if set. 'CLEAR' to not prefix." default:""`
+}
+
 func init() {
-	loadConfig()
-	results = providers.QueryData[[]string]{}
-	terminalApps = map[string]struct{}{}
+	start := time.Now()
+
+	config = &Config{
+		Config:       common.Config{},
+		LaunchPrefix: "",
+	}
+
+	common.LoadConfig(Name, config)
+
+	findTerminalApps()
+	terminal = common.GetTerminal()
+
+	paths = []string{}
+	home, _ := os.UserHomeDir()
+	cmd := exec.Command("fd", ".", home, "--ignore-vcs", "--type", "file", "--type", "directory")
+
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		slog.Error(Name, "files", err)
+		os.Exit(1)
+	}
+
+	for v := range bytes.Lines(out) {
+		if len(v) > 0 {
+			paths = append(paths, strings.TrimSpace(string(v)))
+		}
+	}
+
+	slog.Info(Name, "files", len(paths), "time", time.Since(start))
 }
 
 func PrintDoc() {
@@ -78,29 +110,4 @@ func findTerminalApps() {
 			os.Exit(1)
 		}
 	}
-}
-
-func Load() {
-	start := time.Now()
-
-	findTerminalApps()
-	terminal = common.GetTerminal()
-
-	paths = []string{}
-	home, _ := os.UserHomeDir()
-	cmd := exec.Command("fd", ".", home, "--ignore-vcs", "--type", "file", "--type", "directory")
-
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		slog.Error(Name, "files", err)
-		os.Exit(1)
-	}
-
-	for v := range bytes.Lines(out) {
-		if len(v) > 0 {
-			paths = append(paths, strings.TrimSpace(string(v)))
-		}
-	}
-
-	slog.Info(Name, "files", len(paths), "time", time.Since(start))
 }

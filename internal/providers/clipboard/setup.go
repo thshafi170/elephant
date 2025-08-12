@@ -27,6 +27,8 @@ var (
 	NamePretty = "Clipboard"
 	file       = common.CacheFile("clipboard.gob")
 	imgTypes   = make(map[string]string)
+	config     *Config
+	history    map[string]Item
 )
 
 type Item struct {
@@ -41,23 +43,15 @@ type Config struct {
 	MaxItems      int `koanf:"max_items" desc:"max amount of clipboard history items" default:"100"`
 }
 
-var config *Config
+func init() {
+	start := time.Now()
 
-func loadConfig() {
 	config = &Config{
 		Config:   common.Config{},
 		MaxItems: 100,
 	}
 
 	common.LoadConfig(Name, config)
-}
-
-// hash => item
-var history map[string]Item
-
-func Load() {
-	start := time.Now()
-	loadConfig()
 
 	imgTypes["image/png"] = "png"
 	imgTypes["image/jpg"] = "jpg"

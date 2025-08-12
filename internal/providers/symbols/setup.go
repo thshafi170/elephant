@@ -21,6 +21,7 @@ var (
 	Name       = "symbols"
 	NamePretty = "Symbols/Emojis"
 	h          = history.Load(Name)
+	results    = providers.QueryData[map[string]*Symbol]{}
 )
 
 type Config struct {
@@ -31,7 +32,9 @@ type Config struct {
 
 var config *Config
 
-func loadConfig() {
+func init() {
+	start := time.Now()
+
 	config = &Config{
 		Config:  common.Config{},
 		Locale:  "en",
@@ -39,11 +42,7 @@ func loadConfig() {
 	}
 
 	common.LoadConfig(Name, config)
-}
 
-func Load() {
-	start := time.Now()
-	loadConfig()
 	parse()
 
 	slog.Info(Name, "symbols/emojis", len(symbols), "time", time.Since(start))
@@ -102,12 +101,6 @@ func Activate(qid uint32, identifier, action string, arguments string) {
 			h.Save(results.Queries[qid][last].Query, identifier)
 		}
 	}
-}
-
-var results providers.QueryData[map[string]*Symbol]
-
-func init() {
-	results = providers.QueryData[map[string]*Symbol]{}
 }
 
 func Query(qid uint32, iid uint32, query string) []*pb.QueryResponse_Item {

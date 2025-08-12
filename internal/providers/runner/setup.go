@@ -20,12 +20,14 @@ import (
 var (
 	Name       = "runner"
 	NamePretty = "Runner"
+	results    = providers.QueryData[[]string]{}
 )
 
 var bins = []string{}
 
-func Load() {
+func init() {
 	start := time.Now()
+
 	for p := range strings.SplitSeq(os.Getenv("PATH"), ":") {
 		filepath.WalkDir(p, func(path string, d fs.DirEntry, err error) error {
 			if d != nil && d.IsDir() {
@@ -73,12 +75,6 @@ func Activate(qid uint32, identifier, action string, arguments string) {
 			cmd.Wait()
 		}()
 	}
-}
-
-var results providers.QueryData[[]string]
-
-func init() {
-	results = providers.QueryData[[]string]{}
 }
 
 func Query(qid uint32, iid uint32, query string) []*pb.QueryResponse_Item {

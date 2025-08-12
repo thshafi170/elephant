@@ -19,7 +19,6 @@ import (
 type Provider struct {
 	Name       *string
 	NamePretty *string
-	Load       func()
 	PrintDoc   func()
 	Cleanup    func(qid uint32)
 	Activate   func(qid uint32, identifier, action string, arguments string)
@@ -76,11 +75,6 @@ func Load() {
 					slog.Error("providers", "load", err, "provider", path)
 				}
 
-				loadFunc, err := p.Lookup("Load")
-				if err != nil {
-					slog.Error("providers", "load", err, "provider", path)
-				}
-
 				activateFunc, err := p.Lookup("Activate")
 				if err != nil {
 					slog.Error("providers", "load", err, "provider", path)
@@ -102,7 +96,6 @@ func Load() {
 				}
 
 				provider := Provider{
-					Load:       loadFunc.(func()),
 					Name:       name.(*string),
 					Cleanup:    cleanupFunc.(func(uint32)),
 					Activate:   activateFunc.(func(qid uint32, identifier, action string, arguments string)),
@@ -133,21 +126,4 @@ func Load() {
 	}
 
 	slog.Info("providers", "loaded", len(Providers), "time", time.Since(start))
-}
-
-func Setup() {
-	start := time.Now()
-	var wg sync.WaitGroup
-	wg.Add(len(Providers))
-
-	for _, v := range Providers {
-		go func(wg *sync.WaitGroup, p Provider) {
-			defer wg.Done()
-			p.Load()
-		}(&wg, v)
-	}
-
-	wg.Wait()
-
-	slog.Info("providers", "setup", time.Since(start))
 }

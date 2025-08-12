@@ -128,7 +128,6 @@ func main() {
 			common.InitRunPrefix()
 
 			providers.Load()
-			providers.Setup()
 
 			slog.Info("elephant", "startup", time.Since(start))
 
