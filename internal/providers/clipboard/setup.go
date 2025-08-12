@@ -240,10 +240,21 @@ func PrintDoc() {
 
 func Cleanup(qid uint32) {}
 
-const ActionCopy = "copy"
+const (
+	ActionCopy   = "copy"
+	ActionRemove = "remove"
+)
 
 func Activate(qid uint32, identifier, action string, arguments string) {
 	switch action {
+	case ActionRemove:
+		if history[identifier].Img != "" {
+			_ = os.Remove(history[identifier].Img)
+		}
+
+		delete(history, identifier)
+
+		saveToFile()
 	case ActionCopy:
 		cmd := exec.Command("wl-copy")
 
