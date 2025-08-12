@@ -9,4 +9,5 @@ message ActivateRequest {
   string provider = 2;
   string identifier = 3;
   string action = 4;
+  string arguments = 5;
 }

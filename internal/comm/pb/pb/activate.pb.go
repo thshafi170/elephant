@@ -27,6 +27,7 @@ type ActivateRequest struct {
 	Provider      string                 `protobuf:"bytes,2,opt,name=provider,proto3" json:"provider,omitempty"`
 	Identifier    string                 `protobuf:"bytes,3,opt,name=identifier,proto3" json:"identifier,omitempty"`
 	Action        string                 `protobuf:"bytes,4,opt,name=action,proto3" json:"action,omitempty"`
+	Arguments     string                 `protobuf:"bytes,5,opt,name=arguments,proto3" json:"arguments,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -89,18 +90,26 @@ func (x *ActivateRequest) GetAction() string {
 	return ""
 }
 
+func (x *ActivateRequest) GetArguments() string {
+	if x != nil {
+		return x.Arguments
+	}
+	return ""
+}
+
 var File_activate_proto protoreflect.FileDescriptor
 
 const file_activate_proto_rawDesc = "" +
 	"\n" +
-	"\x0eactivate.proto\x12\x02pb\"w\n" +
+	"\x0eactivate.proto\x12\x02pb\"\x95\x01\n" +
 	"\x0fActivateRequest\x12\x10\n" +
 	"\x03qid\x18\x01 \x01(\x05R\x03qid\x12\x1a\n" +
 	"\bprovider\x18\x02 \x01(\tR\bprovider\x12\x1e\n" +
 	"\n" +
 	"identifier\x18\x03 \x01(\tR\n" +
 	"identifier\x12\x16\n" +
-	"\x06action\x18\x04 \x01(\tR\x06actionB\x06Z\x04./pbb\x06proto3"
+	"\x06action\x18\x04 \x01(\tR\x06action\x12\x1c\n" +
+	"\targuments\x18\x05 \x01(\tR\targumentsB\x06Z\x04./pbb\x06proto3"
 
 var (
 	file_activate_proto_rawDescOnce sync.Once

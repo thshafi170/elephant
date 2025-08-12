@@ -21,7 +21,7 @@ const (
 	ActionCopyFile = "copyfile"
 )
 
-func Activate(qid uint32, identifier, action string) {
+func Activate(qid uint32, identifier, action string, arguments string) {
 	i, err := strconv.Atoi(identifier)
 	if err != nil {
 		slog.Error(Name, "activate", err)

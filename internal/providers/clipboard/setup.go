@@ -197,7 +197,7 @@ func PrintDoc() {
 
 func Cleanup(qid uint32) {}
 
-func Activate(qid uint32, identifier, action string) {}
+func Activate(qid uint32, identifier, action string, arguments string) {}
 
 func Query(qid uint32, iid uint32, text string) []*pb.QueryResponse_Item {
 	entries := []*pb.QueryResponse_Item{}

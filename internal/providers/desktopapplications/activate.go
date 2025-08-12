@@ -9,7 +9,7 @@ import (
 	"github.com/abenz1267/elephant/internal/common"
 )
 
-func Activate(qid uint32, identifier, action string) {
+func Activate(qid uint32, identifier, action string, arguments string) {
 	toRun := ""
 	prefix := common.LaunchPrefix(config.LaunchPrefix)
 
@@ -29,6 +29,8 @@ func Activate(qid uint32, identifier, action string) {
 	} else {
 		toRun = fmt.Sprintf("%s %s", prefix, identifier)
 	}
+
+	toRun = fmt.Sprintf("%s %s", toRun, arguments)
 
 	cmd := exec.Command("sh", "-c", toRun)
 

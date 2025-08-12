@@ -21,6 +21,7 @@ func Activate(data string) {
 		Provider:   v[1],
 		Identifier: v[2],
 		Action:     v[3],
+		Arguments:  v[4],
 	}
 
 	b, err := proto.Marshal(&req)
