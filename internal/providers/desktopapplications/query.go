@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/abenz1267/elephant/internal/comm/pb/pb"
 	"github.com/abenz1267/elephant/internal/common"
 	"github.com/abenz1267/elephant/internal/providers"
+	"github.com/abenz1267/elephant/pkg/pb/pb"
 )
 
 var results providers.QueryData[map[string]*DesktopFile]

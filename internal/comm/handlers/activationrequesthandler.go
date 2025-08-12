@@ -4,8 +4,8 @@ import (
 	"log/slog"
 	"net"
 
-	"github.com/abenz1267/elephant/internal/comm/pb/pb"
 	"github.com/abenz1267/elephant/internal/providers"
+	"github.com/abenz1267/elephant/pkg/pb/pb"
 	"google.golang.org/protobuf/proto"
 )
 

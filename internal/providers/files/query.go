@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/abenz1267/elephant/internal/comm/pb/pb"
 	"github.com/abenz1267/elephant/internal/common"
+	"github.com/abenz1267/elephant/pkg/pb/pb"
 )
 
 func Query(qid uint32, iid uint32, query string) []*pb.QueryResponse_Item {
