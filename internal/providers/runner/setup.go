@@ -42,8 +42,6 @@ func Load() {
 			return nil
 		})
 	}
-
-	fmt.Println(len(bins))
 }
 
 func PrintDoc() {
