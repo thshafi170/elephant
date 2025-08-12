@@ -17,6 +17,7 @@ import (
 	"github.com/abenz1267/elephant/internal/common"
 	"github.com/abenz1267/elephant/internal/common/history"
 	"github.com/abenz1267/elephant/internal/providers"
+	"github.com/abenz1267/elephant/internal/util"
 	"github.com/abenz1267/elephant/pkg/pb/pb"
 )
 
@@ -26,9 +27,15 @@ var (
 	results    = providers.QueryData[[]Item]{}
 )
 
+type ExplicitItem struct {
+	Exec  string `koanf:"exec" desc:"executable/command to run" default:""`
+	Alias string `koanf:"alias" desc:"alias" default:""`
+}
+
 type Config struct {
 	common.Config `koanf:",squash"`
-	History       bool `koanf:"history" desc:"make use of history for sorting" default:"false"`
+	History       bool           `koanf:"history" desc:"make use of history for sorting" default:"false"`
+	Explicits     []ExplicitItem `koanf:"explicits" desc:"use this explicit list, instead of searching $PATH" default:""`
 }
 
 var (
@@ -40,6 +47,7 @@ var (
 type Item struct {
 	Identifier string
 	Bin        string
+	Alias      string
 }
 
 func init() {
@@ -52,37 +60,50 @@ func init() {
 
 	common.LoadConfig(Name, config)
 
-	bins := []string{}
+	if len(config.Explicits) == 0 {
+		bins := []string{}
 
-	for p := range strings.SplitSeq(os.Getenv("PATH"), ":") {
-		filepath.WalkDir(p, func(path string, d fs.DirEntry, err error) error {
-			if d != nil && d.IsDir() {
+		for p := range strings.SplitSeq(os.Getenv("PATH"), ":") {
+			filepath.WalkDir(p, func(path string, d fs.DirEntry, err error) error {
+				if d != nil && d.IsDir() {
+					return nil
+				}
+
+				info, serr := os.Stat(path)
+				if info == nil || serr != nil {
+					return nil
+				}
+
+				if info.Mode()&0111 != 0 {
+					bins = append(bins, filepath.Base(path))
+				}
+
 				return nil
-			}
+			})
+		}
 
-			info, serr := os.Stat(path)
-			if info == nil || serr != nil {
-				return nil
-			}
+		bins = slices.Compact(bins)
 
-			if info.Mode()&0111 != 0 {
-				bins = append(bins, filepath.Base(path))
-			}
+		for _, v := range bins {
+			md5 := md5.Sum([]byte(v))
+			md5str := hex.EncodeToString(md5[:])
 
-			return nil
-		})
-	}
+			items = append(items, Item{
+				Identifier: md5str,
+				Bin:        v,
+			})
+		}
+	} else {
+		for _, v := range config.Explicits {
+			md5 := md5.Sum([]byte(v.Exec))
+			identifier := hex.EncodeToString(md5[:])
 
-	bins = slices.Compact(bins)
-
-	for _, v := range bins {
-		md5 := md5.Sum([]byte(v))
-		md5str := hex.EncodeToString(md5[:])
-
-		items = append(items, Item{
-			Identifier: md5str,
-			Bin:        v,
-		})
+			items = append(items, Item{
+				Identifier: identifier,
+				Bin:        v.Exec,
+				Alias:      v.Alias,
+			})
+		}
 	}
 
 	slog.Info(Name, "executables", len(items), "time", time.Since(start))
@@ -92,6 +113,7 @@ func PrintDoc() {
 	fmt.Printf("### %s\n", NamePretty)
 	fmt.Println("Run everything in your $PATH!")
 	fmt.Println()
+	util.PrintConfig(Config{})
 }
 
 func Cleanup(qid uint32) {
@@ -164,7 +186,22 @@ func Query(qid uint32, iid uint32, query string) []*pb.QueryResponse_Item {
 		}
 
 		if query != "" {
-			e.Score, e.Fuzzyinfo.Positions, e.Fuzzyinfo.Start = common.FuzzyScore(query, e.Text)
+			var score int32
+			var positions []int32
+			var start int32
+
+			score, positions, start = common.FuzzyScore(query, v.Bin)
+			s2, p2, ss2 := common.FuzzyScore(query, v.Alias)
+
+			if s2 > score {
+				score = s2
+				positions = p2
+				start = ss2
+			}
+
+			e.Score = score
+			e.Fuzzyinfo.Positions = positions
+			e.Fuzzyinfo.Start = start
 		}
 
 		usageScore := h.CalcUsageScore(query, e.Identifier)

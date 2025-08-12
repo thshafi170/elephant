@@ -35,8 +35,22 @@ func GenerateDoc() {
 }
 
 func PrintConfig(c any) {
+	printStructTable(c, getStructName(c))
+}
+
+func getStructName(c any) string {
+	val := reflect.ValueOf(c)
+	if val.Kind() == reflect.Ptr {
+		val = val.Elem()
+	}
+	return val.Type().Name()
+}
+
+func printStructTable(c any, structName string) {
+	fmt.Printf("#### %s\n", structName)
 	fmt.Println("| Field | Type | Default | Description |")
 	fmt.Println("| --- | ---- | ---- | --- |")
+
 	printStructDesc(c)
 	fmt.Println()
 }
@@ -54,6 +68,7 @@ func printStructDesc(c any) {
 	}
 
 	typ := val.Type()
+	var nestedStructs []reflect.Type
 
 	for i := 0; i < val.NumField(); i++ {
 		field := typ.Field(i)
@@ -69,6 +84,17 @@ func printStructDesc(c any) {
 			fmt.Printf("|%s|%s|%s|%s|\n",
 				name, field.Type, field.Tag.Get("default"), field.Tag.Get("desc"))
 
+			if field.Type.Kind() == reflect.Slice {
+				elemType := field.Type.Elem()
+				if elemType.Kind() == reflect.Struct {
+					nestedStructs = append(nestedStructs, elemType)
+				}
+			}
 		}
+	}
+
+	for _, structType := range nestedStructs {
+		elemVal := reflect.New(structType).Elem()
+		printStructTable(elemVal.Interface(), structType.Name())
 	}
 }
