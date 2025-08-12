@@ -4,6 +4,8 @@ package util
 import (
 	"fmt"
 	"reflect"
+	"slices"
+	"strings"
 
 	"github.com/abenz1267/elephant/internal/providers"
 )
@@ -17,7 +19,17 @@ func GenerateDoc() {
 
 	fmt.Println("## Provider Configuration")
 
+	p := []providers.Provider{}
+
 	for _, v := range providers.Providers {
+		p = append(p, v)
+	}
+
+	slices.SortFunc(p, func(a, b providers.Provider) int {
+		return strings.Compare(*a.NamePretty, *b.NamePretty)
+	})
+
+	for _, v := range p {
 		v.PrintDoc()
 	}
 }

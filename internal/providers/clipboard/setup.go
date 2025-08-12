@@ -19,6 +19,7 @@ import (
 
 	"github.com/abenz1267/elephant/internal/comm/pb/pb"
 	"github.com/abenz1267/elephant/internal/common"
+	"github.com/abenz1267/elephant/internal/util"
 )
 
 var (
@@ -233,9 +234,10 @@ func saveImg(b []byte, ext string) string {
 }
 
 func PrintDoc() {
-	fmt.Printf("### %s\n", Name)
+	fmt.Printf("### %s\n", NamePretty)
 	fmt.Println("Provides access to your clipboard history.")
 	fmt.Println()
+	util.PrintConfig(Config{})
 }
 
 func Cleanup(qid uint32) {}

@@ -40,7 +40,7 @@ func init() {
 }
 
 func PrintDoc() {
-	fmt.Printf("### %s\n", Name)
+	fmt.Printf("### %s\n", NamePretty)
 	fmt.Println("Search files and folders.")
 	fmt.Println()
 	util.PrintConfig(Config{})
