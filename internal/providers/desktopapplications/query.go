@@ -72,10 +72,10 @@ func Query(qid uint32, iid uint32, query string) []*pb.QueryResponse_Item {
 			}
 		}
 
-		usage, lastUsed := h.FindUsage(query, e.Identifier)
-		e.Score = e.Score + calcUsage(usage, lastUsed)
+		usageScore := h.CalcUsageScore(query, e.Identifier)
+		e.Score = e.Score + usageScore
 
-		if usage != 0 || config.ShowActions && config.ShowGeneric || !config.ShowActions || (config.ShowActions && len(v.Actions) == 0) || query == "" {
+		if usageScore != 0 || config.ShowActions && config.ShowGeneric || !config.ShowActions || (config.ShowActions && len(v.Actions) == 0) || query == "" {
 			if e.Score > 0 || query == "" {
 				entries = append(entries, e)
 
@@ -114,10 +114,10 @@ func Query(qid uint32, iid uint32, query string) []*pb.QueryResponse_Item {
 				}
 			}
 
-			usage, lastUsed := h.FindUsage(query, e.Identifier)
-			e.Score = e.Score + calcUsage(usage, lastUsed)
+			usageScore := h.CalcUsageScore(query, e.Identifier)
+			e.Score = e.Score + usageScore
 
-			if (query == "" && config.ShowActionsWithoutQuery) || (query != "" && config.ShowActions) || usage != 0 {
+			if (query == "" && config.ShowActionsWithoutQuery) || (query != "" && config.ShowActions) || usageScore != 0 {
 				if e.Score > 0 || query == "" {
 					entries = append(entries, e)
 
@@ -142,26 +142,6 @@ func Query(qid uint32, iid uint32, query string) []*pb.QueryResponse_Item {
 	}
 
 	return entries
-}
-
-func calcUsage(amount int, last time.Time) int32 {
-	base := 10
-
-	if amount > 0 {
-		today := time.Now()
-		duration := today.Sub(last)
-		days := int(duration.Hours() / 24)
-
-		if days > 0 {
-			base -= days
-		}
-
-		res := max(base*amount, 1)
-
-		return int32(res)
-	}
-
-	return 0
 }
 
 func calcScore(q string, d *Data) (string, int32, []int32, int32, bool) {

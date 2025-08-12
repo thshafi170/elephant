@@ -23,10 +23,24 @@ var (
 	results    = providers.QueryData[[]string]{}
 )
 
+type Config struct {
+	common.Config `koanf:",squash"`
+	History       bool `koanf:"history" desc:"make use of history for sorting" default:"false"`
+}
+
+var config *Config
+
 var bins = []string{}
 
 func init() {
 	start := time.Now()
+
+	config = &Config{
+		Config:  common.Config{},
+		History: true,
+	}
+
+	common.LoadConfig(Name, config)
 
 	for p := range strings.SplitSeq(os.Getenv("PATH"), ":") {
 		filepath.WalkDir(p, func(path string, d fs.DirEntry, err error) error {

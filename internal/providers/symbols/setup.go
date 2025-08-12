@@ -158,10 +158,10 @@ func Query(qid uint32, iid uint32, query string) []*pb.QueryResponse_Item {
 
 		}
 
-		usage, lastUsed := h.FindUsage(query, e.Identifier)
-		e.Score = e.Score + calcUsage(usage, lastUsed)
+		usageScore := h.CalcUsageScore(query, e.Identifier)
+		e.Score = e.Score + usageScore
 
-		if usage != 0 || e.Score > 0 || query == "" {
+		if usageScore != 0 || e.Score > 0 || query == "" {
 			if query != "" {
 				results.Lock()
 				results.Queries[qid][iid].Results[k] = v
@@ -174,24 +174,4 @@ func Query(qid uint32, iid uint32, query string) []*pb.QueryResponse_Item {
 
 	slog.Info(Name, "queryresult", len(entries), "time", time.Since(start))
 	return entries
-}
-
-func calcUsage(amount int, last time.Time) int32 {
-	base := 10
-
-	if amount > 0 {
-		today := time.Now()
-		duration := today.Sub(last)
-		days := int(duration.Hours() / 24)
-
-		if days > 0 {
-			base -= days
-		}
-
-		res := max(base*amount, 1)
-
-		return int32(res)
-	}
-
-	return 0
 }

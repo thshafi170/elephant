@@ -89,6 +89,32 @@ func (h *History) FindUsage(query, identifier string) (int, time.Time) {
 	return usage, lastUsed
 }
 
+func (h *History) CalcUsageScore(query, identifier string) int32 {
+	amount, last := h.FindUsage(query, identifier)
+
+	if amount == 0 {
+		return 0
+	}
+
+	base := 10
+
+	if amount > 0 {
+		today := time.Now()
+		duration := today.Sub(last)
+		days := int(duration.Hours() / 24)
+
+		if days > 0 {
+			base -= days
+		}
+
+		res := max(base*amount, 1)
+
+		return int32(res)
+	}
+
+	return 0
+}
+
 func Load(provider string) *History {
 	h := History{
 		Data:     make(map[string]map[string]*HistoryData),
