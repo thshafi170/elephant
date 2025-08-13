@@ -1,13 +1,14 @@
 package main
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"syscall"
 
@@ -22,16 +23,20 @@ const (
 )
 
 func Activate(qid uint32, identifier, action string, arguments string) {
-	i, err := strconv.Atoi(identifier)
-	if err != nil {
-		slog.Error(Name, "activate", err)
-		return
+	path := ""
+
+	for k, v := range paths {
+		md5 := md5.Sum([]byte(v))
+		md5str := hex.EncodeToString(md5[:])
+
+		if identifier == md5str {
+			path = paths[k]
+			break
+		}
 	}
 
 	switch action {
 	case ActionOpen, ActionOpenDir:
-		path := paths[i]
-
 		if action == ActionOpenDir {
 			path = filepath.Dir(path)
 		}
@@ -56,7 +61,7 @@ func Activate(qid uint32, identifier, action string, arguments string) {
 			}()
 		}
 	case ActionCopyPath:
-		cmd := exec.Command("wl-copy", paths[i])
+		cmd := exec.Command("wl-copy", path)
 
 		err := cmd.Start()
 		if err != nil {
@@ -68,7 +73,7 @@ func Activate(qid uint32, identifier, action string, arguments string) {
 		}
 
 	case ActionCopyFile:
-		cmd := exec.Command("wl-copy", "-t", "text/uri-list", fmt.Sprintf("file://%s", paths[i]))
+		cmd := exec.Command("wl-copy", "-t", "text/uri-list", fmt.Sprintf("file://%s", path))
 
 		err := cmd.Start()
 		if err != nil {

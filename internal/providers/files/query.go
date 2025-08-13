@@ -1,8 +1,9 @@
 package main
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"log/slog"
-	"strconv"
 	"time"
 
 	"github.com/abenz1267/elephant/internal/common"
@@ -28,13 +29,14 @@ func Query(qid uint32, iid uint32, query string) []*pb.QueryResponse_Item {
 
 	slog.Info(Name, "queryingfiles", len(toFilter))
 
-	for k, v := range toFilter {
+	for _, v := range toFilter {
 		common.FuzzyScore(query, v)
 
-		i := strconv.Itoa(k)
+		md5 := md5.Sum([]byte(v))
+		md5str := hex.EncodeToString(md5[:])
 
 		e := &pb.QueryResponse_Item{
-			Identifier: i,
+			Identifier: md5str,
 			Text:       v,
 			Type:       pb.QueryResponse_REGULAR,
 			Subtext:    "",
