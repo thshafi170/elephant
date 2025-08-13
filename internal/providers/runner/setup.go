@@ -204,8 +204,11 @@ func Query(qid uint32, iid uint32, query string) []*pb.QueryResponse_Item {
 			e.Fuzzyinfo.Start = start
 		}
 
-		usageScore := h.CalcUsageScore(query, e.Identifier)
-		e.Score = e.Score + usageScore
+		var usageScore int32
+		if config.History {
+			usageScore = h.CalcUsageScore(query, e.Identifier)
+			e.Score = e.Score + usageScore
+		}
 
 		if e.Score > 0 || query == "" {
 			if query != "" {
