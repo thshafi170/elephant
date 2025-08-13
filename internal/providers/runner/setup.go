@@ -36,6 +36,7 @@ type Config struct {
 	common.Config `koanf:",squash"`
 	History       bool           `koanf:"history" desc:"make use of history for sorting" default:"false"`
 	Explicits     []ExplicitItem `koanf:"explicits" desc:"use this explicit list, instead of searching $PATH" default:""`
+	Icon          string         `koanf:"icon" desc:"icon to use" default:"utilities-terminal"`
 }
 
 var (
@@ -56,6 +57,7 @@ func init() {
 	config = &Config{
 		Config:  common.Config{},
 		History: true,
+		Icon:    "utilities-terminal",
 	}
 
 	common.LoadConfig(Name, config)
@@ -180,6 +182,7 @@ func Query(qid uint32, iid uint32, query string) []*pb.QueryResponse_Item {
 			Identifier: v.Identifier,
 			Text:       v.Bin,
 			Provider:   Name,
+			Icon:       config.Icon,
 			Score:      0,
 			Fuzzyinfo:  &pb.QueryResponse_Item_FuzzyInfo{},
 			Type:       pb.QueryResponse_REGULAR,
