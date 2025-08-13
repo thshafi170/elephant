@@ -13,8 +13,10 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode"
 
 	"github.com/abenz1267/elephant/internal/common"
+	"github.com/abenz1267/elephant/internal/providers"
 	"github.com/abenz1267/elephant/pkg/pb/pb"
 )
 
@@ -32,7 +34,10 @@ const (
 
 type Config struct {
 	common.Config `koanf:",squash"`
-	MaxItems      int `koanf:"max_items" desc:"max amount of calculation history items" default:"100"`
+	MaxItems      int    `koanf:"max_items" desc:"max amount of calculation history items" default:"100"`
+	Placeholder   string `koanf:"placeholder" desc:"placeholder to display for async update" default:"calculating..."`
+	RequireNumber bool   `koanf:"require_number" desc:"don't perform if query does not contain a number" default:"true"`
+	MinChars      int    `koanf:"min_chars" desc:"don't perform if query is shorter than min_chars" default:"3"`
 }
 
 type HistoryItem struct {
@@ -50,8 +55,11 @@ var (
 
 func init() {
 	config = &Config{
-		Config:   common.Config{},
-		MaxItems: 100,
+		Config:        common.Config{},
+		MaxItems:      100,
+		Placeholder:   "calculating...",
+		RequireNumber: true,
+		MinChars:      3,
 	}
 
 	common.LoadConfig(Name, config)
@@ -168,30 +176,49 @@ func Query(qid uint32, iid uint32, query string) []*pb.QueryResponse_Item {
 
 	entries := []*pb.QueryResponse_Item{}
 
-	if query != "" {
-		cmd := exec.Command("qalc", "-t", query)
-		out, err := cmd.CombinedOutput()
-		if err != nil {
-			slog.Error(Name, "query", err)
-		} else {
-			md5 := md5.Sum([]byte(query))
-			md5str := hex.EncodeToString(md5[:])
+	hasNumber := true
 
-			e := &pb.QueryResponse_Item{
-				Identifier: md5str,
-				Text:       strings.TrimSpace(string(out)),
-				Subtext:    query,
-				Provider:   Name,
-				Score:      int32(config.MaxItems) + 1,
-				Type:       pb.QueryResponse_REGULAR,
+	if config.RequireNumber {
+		hasNumber = false
+
+		for _, c := range query {
+			if unicode.IsDigit(c) {
+				hasNumber = true
+			}
+		}
+	}
+
+	if query != "" && len(query) >= config.MinChars && hasNumber {
+		md5 := md5.Sum([]byte(query))
+		md5str := hex.EncodeToString(md5[:])
+
+		e := &pb.QueryResponse_Item{
+			Identifier: md5str,
+			Text:       config.Placeholder,
+			Subtext:    query,
+			Provider:   Name,
+			Score:      int32(config.MaxItems) + 1,
+			Type:       pb.QueryResponse_REGULAR,
+		}
+
+		go func() {
+			cmd := exec.Command("qalc", "-t", query)
+			out, err := cmd.CombinedOutput()
+
+			if err == nil {
+				e.Text = strings.TrimSpace(string(out))
+
+				resultMutex.Lock()
+				results[qid][md5str] = e
+				resultMutex.Unlock()
+			} else {
+				e.Text = "%DELETE%"
 			}
 
-			resultMutex.Lock()
-			results[qid][md5str] = e
-			resultMutex.Unlock()
+			providers.AsyncChannels[qid][iid] <- e
+		}()
 
-			entries = append(entries, e)
-		}
+		entries = append(entries, e)
 	}
 
 	for k, v := range history {

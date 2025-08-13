@@ -190,7 +190,8 @@ func (h *QueryRequest) Handle(cid uint32, conn net.Conn, data []byte) {
 
 		_, err = conn.Write(buffer.Bytes())
 		if err != nil {
-			panic(err)
+			slog.Error("queryrequesthandler", "write", err)
+			return
 		}
 	}
 
