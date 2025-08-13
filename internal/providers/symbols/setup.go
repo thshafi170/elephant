@@ -38,7 +38,7 @@ func init() {
 	config = &Config{
 		Config:  common.Config{},
 		Locale:  "en",
-		History: true,
+		History: false,
 	}
 
 	common.LoadConfig(Name, config)
@@ -155,7 +155,8 @@ func Query(qid uint32, iid uint32, query string) []*pb.QueryResponse_Item {
 			e.Fuzzyinfo.Start = bestStart
 			e.Score = bestScore
 			e.Subtext = bestText
-
+		} else {
+			e.Subtext = v.Searchable[len(v.Searchable)-1]
 		}
 
 		var usageScore int32
