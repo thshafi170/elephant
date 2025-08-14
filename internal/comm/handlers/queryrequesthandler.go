@@ -156,7 +156,10 @@ func (h *QueryRequest) Handle(cid uint32, conn net.Conn, data []byte) {
 	slices.SortFunc(entries, sortEntries)
 
 	if len(entries) == 0 {
+		writeStatus(QueryNoResults, conn)
 		writeStatus(QueryDone, conn)
+		slog.Info("providers", "results", len(entries), "time", time.Since(start))
+		return
 	}
 
 	if len(entries) > int(req.Maxresults) {

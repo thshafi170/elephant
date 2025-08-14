@@ -153,7 +153,11 @@ func Activate(qid uint32, identifier, action string, arguments string) {
 			}
 		}
 
-		history = append(history[:i], history[i+1:]...)
+		if len(history) > 0 {
+			history = append(history[:i], history[i+1:]...)
+		} else {
+			history = []HistoryItem{}
+		}
 
 		saveHist()
 	}
