@@ -91,7 +91,7 @@ func watch(s *sub, conn net.Conn) {
 			return
 		}
 
-		res := p.Query(s.sid, s.sid, s.query)
+		res := p.Query(s.sid, s.sid, s.query, true)
 
 		slices.SortFunc(res, sortEntries)
 

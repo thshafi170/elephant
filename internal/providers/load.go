@@ -22,7 +22,7 @@ type Provider struct {
 	PrintDoc   func()
 	Cleanup    func(qid uint32)
 	Activate   func(qid uint32, identifier, action string, arguments string)
-	Query      func(qid uint32, iid uint32, query string) []*pb.QueryResponse_Item
+	Query      func(qid uint32, iid uint32, query string, single bool) []*pb.QueryResponse_Item
 }
 
 var (
@@ -99,8 +99,8 @@ func Load() {
 				provider := Provider{
 					Name:       name.(*string),
 					Cleanup:    cleanupFunc.(func(uint32)),
-					Activate:   activateFunc.(func(qid uint32, identifier, action string, arguments string)),
-					Query:      queryFunc.(func(uint32, uint32, string) []*pb.QueryResponse_Item),
+					Activate:   activateFunc.(func(uint32, string, string, string)),
+					Query:      queryFunc.(func(uint32, uint32, string, bool) []*pb.QueryResponse_Item),
 					NamePretty: namePretty.(*string),
 					PrintDoc:   printDocFunc.(func()),
 				}

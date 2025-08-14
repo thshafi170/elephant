@@ -245,6 +245,10 @@ const (
 )
 
 func Activate(qid uint32, identifier, action string, arguments string) {
+	if action == "" {
+		action = ActionCopy
+	}
+
 	switch action {
 	case ActionRemove:
 		if history[identifier].Img != "" {
@@ -278,7 +282,7 @@ func Activate(qid uint32, identifier, action string, arguments string) {
 	}
 }
 
-func Query(qid uint32, iid uint32, text string) []*pb.QueryResponse_Item {
+func Query(qid uint32, iid uint32, text string, _ bool) []*pb.QueryResponse_Item {
 	entries := []*pb.QueryResponse_Item{}
 
 	for k, v := range history {

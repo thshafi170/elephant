@@ -115,6 +115,10 @@ func Activate(qid uint32, identifier, action string, arguments string) {
 		return
 	}
 
+	if action == "" {
+		action = ActionCopy
+	}
+
 	switch action {
 	case ActionCopy:
 		cmd := exec.Command("wl-copy", result)
@@ -167,7 +171,7 @@ func saveToHistory(item *pb.QueryResponse_Item) {
 	saveHist()
 }
 
-func Query(qid uint32, iid uint32, query string) []*pb.QueryResponse_Item {
+func Query(qid uint32, iid uint32, query string, single bool) []*pb.QueryResponse_Item {
 	start := time.Now()
 
 	if _, ok := results[qid]; !ok {
@@ -221,17 +225,19 @@ func Query(qid uint32, iid uint32, query string) []*pb.QueryResponse_Item {
 		entries = append(entries, e)
 	}
 
-	for k, v := range history {
-		e := &pb.QueryResponse_Item{
-			Identifier: v.Identifier,
-			Text:       v.Result,
-			Score:      int32(config.MaxItems - k),
-			Subtext:    v.Input,
-			Provider:   Name,
-			Type:       pb.QueryResponse_REGULAR,
-		}
+	if single {
+		for k, v := range history {
+			e := &pb.QueryResponse_Item{
+				Identifier: v.Identifier,
+				Text:       v.Result,
+				Score:      int32(config.MaxItems - k),
+				Subtext:    v.Input,
+				Provider:   Name,
+				Type:       pb.QueryResponse_REGULAR,
+			}
 
-		entries = append(entries, e)
+			entries = append(entries, e)
+		}
 	}
 
 	slog.Info(Name, "queryresult", len(entries), "time", time.Since(start))

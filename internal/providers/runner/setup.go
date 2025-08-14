@@ -161,7 +161,7 @@ func Activate(qid uint32, identifier, action string, arguments string) {
 	}
 }
 
-func Query(qid uint32, iid uint32, query string) []*pb.QueryResponse_Item {
+func Query(qid uint32, iid uint32, query string, _ bool) []*pb.QueryResponse_Item {
 	entries := []*pb.QueryResponse_Item{}
 
 	var toFilter []Item

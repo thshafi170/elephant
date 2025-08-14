@@ -10,7 +10,7 @@ import (
 	"github.com/abenz1267/elephant/pkg/pb/pb"
 )
 
-func Query(qid uint32, iid uint32, query string) []*pb.QueryResponse_Item {
+func Query(qid uint32, iid uint32, query string, _ bool) []*pb.QueryResponse_Item {
 	start := time.Now()
 	entries := []*pb.QueryResponse_Item{}
 

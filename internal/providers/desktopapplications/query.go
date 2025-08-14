@@ -19,7 +19,7 @@ func init() {
 	results = providers.QueryData[map[string]*DesktopFile]{}
 }
 
-func Query(qid uint32, iid uint32, query string) []*pb.QueryResponse_Item {
+func Query(qid uint32, iid uint32, query string, _ bool) []*pb.QueryResponse_Item {
 	start := time.Now()
 	desktop := os.Getenv("XDG_CURRENT_DESKTOP")
 	entries := []*pb.QueryResponse_Item{}

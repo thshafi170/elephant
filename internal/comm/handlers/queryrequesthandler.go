@@ -142,7 +142,7 @@ func (h *QueryRequest) Handle(cid uint32, conn net.Conn, data []byte) {
 		go func(text string, wg *sync.WaitGroup) {
 			defer wg.Done()
 			if p, ok := providers.Providers[v]; ok {
-				res := p.Query(currentQID, currentIteration, text)
+				res := p.Query(currentQID, currentIteration, text, len(req.Providers) == 1)
 
 				mut.Lock()
 				entries = append(entries, res...)

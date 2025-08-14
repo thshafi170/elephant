@@ -25,6 +25,10 @@ const (
 func Activate(qid uint32, identifier, action string, arguments string) {
 	path := ""
 
+	if action == "" {
+		action = ActionOpen
+	}
+
 	for k, v := range paths {
 		md5 := md5.Sum([]byte(v))
 		md5str := hex.EncodeToString(md5[:])
