@@ -36,7 +36,9 @@ func init() {
 	start := time.Now()
 
 	config = &Config{
-		Config:  common.Config{},
+		Config: common.Config{
+			Icon: "face-smile",
+		},
 		Locale:  "en",
 		History: false,
 	}
@@ -178,4 +180,8 @@ func Query(qid uint32, iid uint32, query string, _ bool) []*pb.QueryResponse_Ite
 
 	slog.Info(Name, "queryresult", len(entries), "time", time.Since(start))
 	return entries
+}
+
+func Icon() string {
+	return config.Icon
 }

@@ -2,9 +2,12 @@
 package handlers
 
 import (
+	"bytes"
+	"encoding/binary"
 	"log/slog"
 	"net"
 	"slices"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -51,9 +54,15 @@ func init() {
 	// handle general realtime subs
 	go func() {
 		for p := range ProviderUpdated {
+			value := p
+
+			if strings.HasPrefix(p, "menues:") {
+				p = "menues"
+			}
+
 			for k, v := range subs {
 				if v.provider == p && v.interval == 0 && v.query == "" {
-					if ok := updated(v.conn); !ok {
+					if ok := updated(v.conn, value); !ok {
 						delete(subs, k)
 					}
 				}
@@ -79,6 +88,8 @@ func subscribe(interval int, provider, query string, conn net.Conn) {
 	if interval != 0 {
 		go watch(sub, conn)
 	}
+
+	slog.Info("subscription", "new", sub.provider)
 }
 
 func watch(s *sub, conn net.Conn) {
@@ -100,7 +111,7 @@ func watch(s *sub, conn net.Conn) {
 			if len(res) != len(s.results) {
 				s.results = res
 
-				if ok := updated(conn); !ok {
+				if ok := updated(conn, ""); !ok {
 					delete(subs, s.sid)
 				}
 
@@ -112,7 +123,7 @@ func watch(s *sub, conn net.Conn) {
 				if !equals(v, s.results[k]) {
 					s.results = res
 
-					if ok := updated(conn); !ok {
+					if ok := updated(conn, ""); !ok {
 						delete(subs, s.sid)
 					}
 
@@ -125,14 +136,31 @@ func watch(s *sub, conn net.Conn) {
 	}
 }
 
-func updated(conn net.Conn) bool {
-	ok, err := writeStatus(SubscriptionDataChanged, conn)
+func updated(conn net.Conn, value string) bool {
+	resp := pb.SubscribeResponse{
+		Value: value,
+	}
+
+	b, err := proto.Marshal(&resp)
 	if err != nil {
-		slog.Error("subscription", "update", err)
+		panic(err)
+	}
+
+	var buffer bytes.Buffer
+	buffer.Write([]byte{SubscriptionDataChanged})
+
+	lengthBuf := make([]byte, 4)
+	binary.BigEndian.PutUint32(lengthBuf, uint32(len(b)))
+	buffer.Write(lengthBuf)
+	buffer.Write(b)
+
+	_, err = conn.Write(buffer.Bytes())
+	if err != nil {
+		slog.Error("queryrequesthandler", "write", err)
 		return false
 	}
 
-	return ok
+	return true
 }
 
 func equals(a *pb.QueryResponse_Item, b *pb.QueryResponse_Item) bool {

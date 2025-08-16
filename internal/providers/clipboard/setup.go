@@ -47,7 +47,9 @@ func init() {
 	start := time.Now()
 
 	config = &Config{
-		Config:   common.Config{},
+		Config: common.Config{
+			Icon: "user-bookmarks",
+		},
 		MaxItems: 100,
 	}
 
@@ -341,4 +343,8 @@ func getMimetypes() []string {
 	}
 
 	return strings.Fields(string(out))
+}
+
+func Icon() string {
+	return config.Icon
 }

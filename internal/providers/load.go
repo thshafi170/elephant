@@ -20,6 +20,7 @@ type Provider struct {
 	Name       *string
 	NamePretty *string
 	PrintDoc   func()
+	Icon       func() string
 	Cleanup    func(qid uint32)
 	Activate   func(qid uint32, identifier, action string, arguments string)
 	Query      func(qid uint32, iid uint32, query string, single bool) []*pb.QueryResponse_Item
@@ -33,6 +34,7 @@ var (
 
 func Load() {
 	start := time.Now()
+	common.LoadMenues()
 
 	var mut sync.Mutex
 	have := []string{}
@@ -91,12 +93,18 @@ func Load() {
 					slog.Error("providers", "load", err, "provider", path)
 				}
 
+				iconFunc, err := p.Lookup("Icon")
+				if err != nil {
+					slog.Error("providers", "load", err, "provider", path)
+				}
+
 				printDocFunc, err := p.Lookup("PrintDoc")
 				if err != nil {
 					slog.Error("providers", "load", err, "provider", path)
 				}
 
 				provider := Provider{
+					Icon:       iconFunc.(func() string),
 					Name:       name.(*string),
 					Cleanup:    cleanupFunc.(func(uint32)),
 					Activate:   activateFunc.(func(uint32, string, string, string)),

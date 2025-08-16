@@ -81,27 +81,27 @@ func (x *SubscribeRequest) GetQuery() string {
 	return ""
 }
 
-type SubscribeResonse struct {
+type SubscribeResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Sid           int32                  `protobuf:"varint,1,opt,name=sid,proto3" json:"sid,omitempty"`
+	Value         string                 `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *SubscribeResonse) Reset() {
-	*x = SubscribeResonse{}
+func (x *SubscribeResponse) Reset() {
+	*x = SubscribeResponse{}
 	mi := &file_subscribe_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *SubscribeResonse) String() string {
+func (x *SubscribeResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*SubscribeResonse) ProtoMessage() {}
+func (*SubscribeResponse) ProtoMessage() {}
 
-func (x *SubscribeResonse) ProtoReflect() protoreflect.Message {
+func (x *SubscribeResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_subscribe_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -113,16 +113,16 @@ func (x *SubscribeResonse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SubscribeResonse.ProtoReflect.Descriptor instead.
-func (*SubscribeResonse) Descriptor() ([]byte, []int) {
+// Deprecated: Use SubscribeResponse.ProtoReflect.Descriptor instead.
+func (*SubscribeResponse) Descriptor() ([]byte, []int) {
 	return file_subscribe_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *SubscribeResonse) GetSid() int32 {
+func (x *SubscribeResponse) GetValue() string {
 	if x != nil {
-		return x.Sid
+		return x.Value
 	}
-	return 0
+	return ""
 }
 
 var File_subscribe_proto protoreflect.FileDescriptor
@@ -133,9 +133,9 @@ const file_subscribe_proto_rawDesc = "" +
 	"\x10SubscribeRequest\x12\x1a\n" +
 	"\binterval\x18\x01 \x01(\x05R\binterval\x12\x1a\n" +
 	"\bprovider\x18\x02 \x01(\tR\bprovider\x12\x14\n" +
-	"\x05query\x18\x03 \x01(\tR\x05query\"$\n" +
-	"\x10SubscribeResonse\x12\x10\n" +
-	"\x03sid\x18\x01 \x01(\x05R\x03sidB\x06Z\x04./pbb\x06proto3"
+	"\x05query\x18\x03 \x01(\tR\x05query\")\n" +
+	"\x11SubscribeResponse\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05valueB\x06Z\x04./pbb\x06proto3"
 
 var (
 	file_subscribe_proto_rawDescOnce sync.Once
@@ -151,8 +151,8 @@ func file_subscribe_proto_rawDescGZIP() []byte {
 
 var file_subscribe_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_subscribe_proto_goTypes = []any{
-	(*SubscribeRequest)(nil), // 0: pb.SubscribeRequest
-	(*SubscribeResonse)(nil), // 1: pb.SubscribeResonse
+	(*SubscribeRequest)(nil),  // 0: pb.SubscribeRequest
+	(*SubscribeResponse)(nil), // 1: pb.SubscribeResponse
 }
 var file_subscribe_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type

@@ -64,7 +64,7 @@ func Query(data string, async bool) {
 			break
 		}
 
-		if header[0] != 0 && header[0] != 1 && header[0] != done {
+		if header[0] != 0 && header[0] != 1 && header[0] != done && header[0] != empty {
 			panic("invalid protocol prefix")
 		}
 

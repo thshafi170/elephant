@@ -7,4 +7,7 @@ import (
 
 var socket = filepath.Join(os.TempDir(), "elephant.sock")
 
-const done = 255
+const (
+	done  = 255
+	empty = 254
+)

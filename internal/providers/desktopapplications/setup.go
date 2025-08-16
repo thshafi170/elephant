@@ -33,7 +33,9 @@ type Config struct {
 func init() {
 	start := time.Now()
 	config = &Config{
-		Config:                  common.Config{},
+		Config: common.Config{
+			Icon: "applications-other",
+		},
 		ShowActions:             false,
 		ShowGeneric:             false,
 		ShowActionsWithoutQuery: false,
@@ -45,4 +47,8 @@ func init() {
 	loadFiles()
 
 	slog.Info(Name, "desktop files", len(files), "time", time.Since(start))
+}
+
+func Icon() string {
+	return config.Icon
 }

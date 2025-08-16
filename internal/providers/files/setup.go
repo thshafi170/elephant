@@ -41,7 +41,9 @@ func init() {
 	start := time.Now()
 
 	config = &Config{
-		Config:       common.Config{},
+		Config: common.Config{
+			Icon: "folder",
+		},
 		LaunchPrefix: "",
 	}
 
@@ -110,4 +112,8 @@ func findTerminalApps() {
 			os.Exit(1)
 		}
 	}
+}
+
+func Icon() string {
+	return config.Icon
 }

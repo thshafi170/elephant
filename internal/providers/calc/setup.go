@@ -55,7 +55,9 @@ var (
 
 func init() {
 	config = &Config{
-		Config:        common.Config{},
+		Config: common.Config{
+			Icon: "accessories-calculator",
+		},
 		MaxItems:      100,
 		Placeholder:   "calculating...",
 		RequireNumber: true,
@@ -291,4 +293,8 @@ func saveHist() {
 	if err != nil {
 		slog.Error("history", "writefile", err)
 	}
+}
+
+func Icon() string {
+	return config.Icon
 }

@@ -58,6 +58,20 @@ func main() {
 				},
 			},
 			{
+				Name:    "menu",
+				Aliases: []string{"m"},
+				Arguments: []cli.Argument{
+					&cli.StringArg{
+						Name: "menu",
+					},
+				},
+				Usage: "send request to open a menu",
+				Action: func(ctx context.Context, cmd *cli.Command) error {
+					client.RequestMenu(cmd.StringArg("menu"))
+					return nil
+				},
+			},
+			{
 				Name:    "generatedoc",
 				Aliases: []string{"d"},
 				Usage:   "generates a markdown documentation",

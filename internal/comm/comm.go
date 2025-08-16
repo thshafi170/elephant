@@ -25,6 +25,7 @@ const (
 	QueryRequestHandlerPos     = 0
 	ActivateRequestHandlerPos  = 1
 	SubscribeRequestHandlerPos = 2
+	MenuRequestHandlerPos      = 3
 )
 
 func init() {
@@ -33,6 +34,7 @@ func init() {
 	registry[QueryRequestHandlerPos] = &handlers.QueryRequest{}
 	registry[ActivateRequestHandlerPos] = &handlers.ActivateRequest{}
 	registry[SubscribeRequestHandlerPos] = &handlers.SubscribeRequest{}
+	registry[MenuRequestHandlerPos] = &handlers.MenuRequest{}
 }
 
 func StartListen() {

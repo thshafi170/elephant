@@ -53,6 +53,8 @@ func Cleanup(qid uint32) {
 	delete(AsyncChannels, qid)
 
 	for _, v := range QueryProviders[qid] {
-		Providers[v].Cleanup(qid)
+		if p, ok := Providers[v]; ok {
+			p.Cleanup(qid)
+		}
 	}
 }

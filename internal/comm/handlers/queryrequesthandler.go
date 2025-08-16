@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"log/slog"
 	"net"
 	"slices"
@@ -139,6 +140,14 @@ func (h *QueryRequest) Handle(cid uint32, conn net.Conn, data []byte) {
 	go handleAsync(currentQID, currentIteration, conn)
 
 	for _, v := range req.Providers {
+		query := req.Query
+
+		if strings.HasPrefix(v, "menues:") {
+			split := strings.Split(v, ":")
+			v = split[0]
+			query = fmt.Sprintf("%s:%s", split[1], query)
+		}
+
 		go func(text string, wg *sync.WaitGroup) {
 			defer wg.Done()
 			if p, ok := providers.Providers[v]; ok {
@@ -148,7 +157,7 @@ func (h *QueryRequest) Handle(cid uint32, conn net.Conn, data []byte) {
 				entries = append(entries, res...)
 				mut.Unlock()
 			}
-		}(req.Query, &wg)
+		}(query, &wg)
 	}
 
 	wg.Wait()

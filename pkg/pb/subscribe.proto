@@ -10,6 +10,6 @@ message SubscribeRequest {
   string query = 3;
 }
 
-message SubscribeResonse {
-  int32 sid = 1;
+message SubscribeResponse {
+  string value = 2;
 }

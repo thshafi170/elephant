@@ -38,27 +38,55 @@ func Query(qid uint32, iid uint32, query string, single bool) []*pb.QueryRespons
 			continue
 		}
 
-		e := &pb.QueryResponse_Item{
-			Identifier: *v.Name,
-			Text:       *v.NamePretty,
-			Provider:   Name,
-			Type:       pb.QueryResponse_REGULAR,
-		}
+		if *v.Name == "menues" {
+			for _, v := range common.Menues {
+				if v.HideFromProviderlist {
+					continue
+				}
 
-		if query != "" {
-			e.Fuzzyinfo = &pb.QueryResponse_Item_FuzzyInfo{
-				Field: "text",
+				e := &pb.QueryResponse_Item{
+					Identifier: fmt.Sprintf("%s:%s", "menues", v.Name),
+					Text:       v.NamePretty,
+					Subtext:    v.Description,
+					Provider:   Name,
+					Type:       pb.QueryResponse_REGULAR,
+					Icon:       v.Icon,
+				}
+
+				if query != "" {
+					e.Fuzzyinfo = &pb.QueryResponse_Item_FuzzyInfo{
+						Field: "text",
+					}
+
+					e.Score, e.Fuzzyinfo.Positions, e.Fuzzyinfo.Start = common.FuzzyScore(query, e.Text)
+				}
+
+				if e.Score > 0 || query == "" {
+					entries = append(entries, e)
+				}
+			}
+		} else {
+			e := &pb.QueryResponse_Item{
+				Identifier: *v.Name,
+				Text:       *v.NamePretty,
+				Icon:       v.Icon(),
+				Provider:   Name,
+				Type:       pb.QueryResponse_REGULAR,
 			}
 
-			e.Score, e.Fuzzyinfo.Positions, e.Fuzzyinfo.Start = common.FuzzyScore(query, e.Text)
-		}
+			if query != "" {
+				e.Fuzzyinfo = &pb.QueryResponse_Item_FuzzyInfo{
+					Field: "text",
+				}
 
-		if e.Score > 0 || query == "" {
-			entries = append(entries, e)
+				e.Score, e.Fuzzyinfo.Positions, e.Fuzzyinfo.Start = common.FuzzyScore(query, e.Text)
+			}
+
+			if e.Score > 0 || query == "" {
+				entries = append(entries, e)
+			}
 		}
 	}
-
-	slog.Info(Name, "queryresult", len(entries), "time", time.Since(start))
 
 	slices.SortFunc(entries, func(a, b *pb.QueryResponse_Item) int {
 		if a.Score > b.Score {
@@ -72,5 +100,11 @@ func Query(qid uint32, iid uint32, query string, single bool) []*pb.QueryRespons
 		return strings.Compare(a.Text, b.Text)
 	})
 
+	slog.Info(Name, "queryresult", len(entries), "time", time.Since(start))
+
 	return entries
+}
+
+func Icon() string {
+	return ""
 }

@@ -1,0 +1,116 @@
+package common
+
+import (
+	"crypto/md5"
+	"encoding/hex"
+	"fmt"
+	"io/fs"
+	"log/slog"
+	"os"
+	"path/filepath"
+
+	"github.com/charlievieth/fastwalk"
+	"github.com/pelletier/go-toml/v2"
+)
+
+type MenuConfig struct {
+	Config `koanf:",squash"`
+	Paths  []string `koanf:"paths" desc:"additional paths to check for menu definitions." default:""`
+}
+
+type Menu struct {
+	Name                 string  `toml:"name"`
+	NamePretty           string  `toml:"name_pretty"`
+	Description          string  `toml:"description"`
+	Icon                 string  `toml:"icon"`
+	Action               string  `toml:"action"`
+	GlobalSearch         bool    `toml:"global_search"`
+	HideFromProviderlist bool    `toml:"hide_from_providerlist"`
+	Entries              []Entry `toml:"entries"`
+}
+
+type Entry struct {
+	Text    string `toml:"text"`
+	Async   string `toml:"async"`
+	Subtext string `toml:"subtext"`
+	Value   string `toml:"value"`
+	Action  string `toml:"action"`
+	Icon    string `toml:"icon"`
+	SubMenu string `toml:"submenu"`
+	Preview string `toml:"preview"`
+
+	Identifier string `toml:"-"`
+	Menu       string `toml:"-"`
+}
+
+func (e Entry) CreateIdentifier() string {
+	md5 := md5.Sum(fmt.Appendf([]byte(""), "%s%s%s", e.Menu, e.Text, e.Value))
+	return hex.EncodeToString(md5[:])
+}
+
+var (
+	menuConfigLoaded MenuConfig
+	menuname         = "menues"
+	Menues           = make(map[string]Menu)
+)
+
+func LoadMenues() {
+	menuConfigLoaded = MenuConfig{
+		Config: Config{},
+		Paths:  []string{},
+	}
+
+	LoadConfig(menuname, menuConfigLoaded)
+
+	path := filepath.Join(ConfigDir(), "menues")
+
+	menuConfigLoaded.Paths = append(menuConfigLoaded.Paths, path)
+
+	conf := fastwalk.Config{
+		Follow: true,
+	}
+
+	for _, root := range menuConfigLoaded.Paths {
+		if _, err := os.Stat(root); err != nil {
+			continue
+		}
+
+		if err := fastwalk.Walk(&conf, root, func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return err
+			}
+
+			if d.IsDir() {
+				return nil
+			}
+
+			m := Menu{}
+
+			b, err := os.ReadFile(path)
+			if err != nil {
+				slog.Error(menuname, "setup", err)
+			}
+
+			err = toml.Unmarshal(b, &m)
+			if err != nil {
+				slog.Error(menuname, "setup", err)
+			}
+
+			for k, v := range m.Entries {
+				m.Entries[k].Menu = m.Name
+				m.Entries[k].Identifier = v.CreateIdentifier()
+
+				if v.SubMenu != "" {
+					m.Entries[k].Identifier = fmt.Sprintf("keepopen:menues:%s", v.SubMenu)
+				}
+			}
+
+			Menues[m.Name] = m
+
+			return nil
+		}); err != nil {
+			slog.Error(menuname, "walk", err)
+			os.Exit(1)
+		}
+	}
+}

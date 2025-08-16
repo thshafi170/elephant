@@ -119,6 +119,16 @@ jobs:
         echo "Building providerlist plugin for linux/arm64..."
         GOOS=linux GOARCH=arm64 CGO_ENABLED=1 CC=aarch64-linux-gnu-gcc go build -buildmode=plugin -o build/providerlist-linux-arm64.so ./internal/providers/providerlist
 
+    - name: Build menues plugin for linux/amd64
+      run: |
+        echo "Building menues plugin for linux/amd64..."
+        GOOS=linux GOARCH=amd64 CGO_ENABLED=1 go build -buildmode=plugin -o build/menues-linux-amd64.so ./internal/providers/menues
+
+    - name: Build menues plugin for linux/arm64
+      run: |
+        echo "Building menues plugin for linux/arm64..."
+        GOOS=linux GOARCH=arm64 CGO_ENABLED=1 CC=aarch64-linux-gnu-gcc go build -buildmode=plugin -o build/menues-linux-arm64.so ./internal/providers/menues
+
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
@@ -182,6 +192,10 @@ jobs:
         # Archive providerlist plugin
         tar -czf providerlist-linux-amd64.tar.gz providerlist-linux-amd64.so
         tar -czf providerlist-linux-arm64.tar.gz providerlist-linux-arm64.so
+
+        # Archive menues plugin
+        tar -czf menues-linux-amd64.tar.gz menues-linux-amd64.so
+        tar -czf menues-linux-arm64.tar.gz menues-linux-arm64.so
 
         echo "Build completed successfully!"
         echo "Created archives:"

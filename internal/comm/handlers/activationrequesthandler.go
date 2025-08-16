@@ -3,6 +3,7 @@ package handlers
 import (
 	"log/slog"
 	"net"
+	"strings"
 
 	"github.com/abenz1267/elephant/internal/providers"
 	"github.com/abenz1267/elephant/pkg/pb/pb"
@@ -19,7 +20,13 @@ func (a *ActivateRequest) Handle(cid uint32, conn net.Conn, data []byte) {
 		return
 	}
 
-	providers.Providers[req.Provider].Activate(uint32(req.Qid), req.Identifier, req.Action, req.Arguments)
+	provider := req.Provider
+
+	if strings.HasPrefix(provider, "menues:") {
+		provider = strings.Split(provider, ":")[0]
+	}
+
+	providers.Providers[provider].Activate(uint32(req.Qid), req.Identifier, req.Action, req.Arguments)
 
 	providers.Cleanup(uint32(req.Qid))
 }

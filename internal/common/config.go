@@ -11,7 +11,9 @@ import (
 	"github.com/knadh/koanf/v2"
 )
 
-type Config struct{}
+type Config struct {
+	Icon string `koanf:"icon" desc:"icon for provider" default:"depends on provider"`
+}
 
 func LoadConfig(provider string, config any) {
 	defaults := koanf.New(".")
