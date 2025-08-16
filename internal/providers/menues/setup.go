@@ -103,7 +103,7 @@ func Activate(qid uint32, identifier, action string, arguments string) {
 	}
 }
 
-func Query(qid uint32, iid uint32, query string, _ bool) []*pb.QueryResponse_Item {
+func Query(qid uint32, iid uint32, query string, _ bool, exact bool) []*pb.QueryResponse_Item {
 	start := time.Now()
 	entries := []*pb.QueryResponse_Item{}
 	menu := ""
@@ -157,7 +157,7 @@ func Query(qid uint32, iid uint32, query string, _ bool) []*pb.QueryResponse_Ite
 					Field: "text",
 				}
 
-				e.Score, e.Fuzzyinfo.Positions, e.Fuzzyinfo.Start = common.FuzzyScore(query, e.Text)
+				e.Score, e.Fuzzyinfo.Positions, e.Fuzzyinfo.Start = common.FuzzyScore(query, e.Text, exact)
 			}
 
 			if e.Score > 0 || query == "" {

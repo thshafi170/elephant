@@ -284,7 +284,7 @@ func Activate(qid uint32, identifier, action string, arguments string) {
 	}
 }
 
-func Query(qid uint32, iid uint32, text string, _ bool) []*pb.QueryResponse_Item {
+func Query(qid uint32, iid uint32, text string, _ bool, exact bool) []*pb.QueryResponse_Item {
 	entries := []*pb.QueryResponse_Item{}
 
 	for k, v := range history {
@@ -303,7 +303,7 @@ func Query(qid uint32, iid uint32, text string, _ bool) []*pb.QueryResponse_Item
 		}
 
 		if text != "" {
-			score, pos, start := common.FuzzyScore(text, v.Content)
+			score, pos, start := common.FuzzyScore(text, v.Content, exact)
 
 			e.Score = score
 			e.Fuzzyinfo = &pb.QueryResponse_Item_FuzzyInfo{

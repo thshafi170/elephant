@@ -23,7 +23,7 @@ type Provider struct {
 	Icon       func() string
 	Cleanup    func(qid uint32)
 	Activate   func(qid uint32, identifier, action string, arguments string)
-	Query      func(qid uint32, iid uint32, query string, single bool) []*pb.QueryResponse_Item
+	Query      func(qid uint32, iid uint32, query string, single bool, exact bool) []*pb.QueryResponse_Item
 }
 
 var (
@@ -109,7 +109,7 @@ func Load() {
 					Name:       name.(*string),
 					Cleanup:    cleanupFunc.(func(uint32)),
 					Activate:   activateFunc.(func(uint32, string, string, string)),
-					Query:      queryFunc.(func(uint32, uint32, string, bool) []*pb.QueryResponse_Item),
+					Query:      queryFunc.(func(uint32, uint32, string, bool, bool) []*pb.QueryResponse_Item),
 					NamePretty: namePretty.(*string),
 					PrintDoc:   printDocFunc.(func()),
 				}

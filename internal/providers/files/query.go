@@ -10,14 +10,14 @@ import (
 	"github.com/abenz1267/elephant/pkg/pb/pb"
 )
 
-func Query(qid uint32, iid uint32, query string, _ bool) []*pb.QueryResponse_Item {
+func Query(qid uint32, iid uint32, query string, _ bool, exact bool) []*pb.QueryResponse_Item {
 	start := time.Now()
 	entries := []*pb.QueryResponse_Item{}
 
 	var toFilter []string
 
 	if query != "" {
-		data, ok := results.GetData(query, qid, iid, []string{})
+		data, ok := results.GetData(query, qid, iid, []string{}, exact)
 		if ok {
 			toFilter = data
 		} else {
@@ -30,7 +30,7 @@ func Query(qid uint32, iid uint32, query string, _ bool) []*pb.QueryResponse_Ite
 	slog.Info(Name, "queryingfiles", len(toFilter))
 
 	for _, v := range toFilter {
-		common.FuzzyScore(query, v)
+		common.FuzzyScore(query, v, exact)
 
 		md5 := md5.Sum([]byte(v))
 		md5str := hex.EncodeToString(md5[:])
@@ -48,7 +48,7 @@ func Query(qid uint32, iid uint32, query string, _ bool) []*pb.QueryResponse_Ite
 				Field: "text",
 			}
 
-			e.Score, e.Fuzzyinfo.Positions, e.Fuzzyinfo.Start = common.FuzzyScore(query, e.Text)
+			e.Score, e.Fuzzyinfo.Positions, e.Fuzzyinfo.Start = common.FuzzyScore(query, e.Text, exact)
 		}
 
 		if e.Score > 0 || query == "" {

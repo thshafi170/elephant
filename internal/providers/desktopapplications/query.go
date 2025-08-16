@@ -19,7 +19,7 @@ func init() {
 	results = providers.QueryData[map[string]*DesktopFile]{}
 }
 
-func Query(qid uint32, iid uint32, query string, _ bool) []*pb.QueryResponse_Item {
+func Query(qid uint32, iid uint32, query string, _ bool, exact bool) []*pb.QueryResponse_Item {
 	start := time.Now()
 	desktop := os.Getenv("XDG_CURRENT_DESKTOP")
 	entries := []*pb.QueryResponse_Item{}
@@ -29,7 +29,7 @@ func Query(qid uint32, iid uint32, query string, _ bool) []*pb.QueryResponse_Ite
 	isSub := qid >= 100_000_000
 
 	if !isSub && query != "" {
-		data, ok := results.GetData(query, qid, iid, make(map[string]*DesktopFile))
+		data, ok := results.GetData(query, qid, iid, make(map[string]*DesktopFile), exact)
 		if ok {
 			toFilter = data
 		} else {
@@ -64,7 +64,7 @@ func Query(qid uint32, iid uint32, query string, _ bool) []*pb.QueryResponse_Ite
 				Field: "text",
 			}
 
-			match, e.Score, e.Fuzzyinfo.Positions, e.Fuzzyinfo.Start, ok = calcScore(query, &v.Data)
+			match, e.Score, e.Fuzzyinfo.Positions, e.Fuzzyinfo.Start, ok = calcScore(query, &v.Data, exact)
 
 			if ok && match != e.Text {
 				e.Subtext = match
@@ -109,7 +109,7 @@ func Query(qid uint32, iid uint32, query string, _ bool) []*pb.QueryResponse_Ite
 					Field: "text",
 				}
 
-				match, e.Score, e.Fuzzyinfo.Positions, e.Fuzzyinfo.Start, ok = calcScore(query, &a)
+				match, e.Score, e.Fuzzyinfo.Positions, e.Fuzzyinfo.Start, ok = calcScore(query, &a, exact)
 
 				if ok && match != e.Text {
 					e.Subtext = match
@@ -150,7 +150,7 @@ func Query(qid uint32, iid uint32, query string, _ bool) []*pb.QueryResponse_Ite
 	return entries
 }
 
-func calcScore(q string, d *Data) (string, int32, []int32, int32, bool) {
+func calcScore(q string, d *Data, exact bool) (string, int32, []int32, int32, bool) {
 	var scoreRes int32
 	var posRes []int32
 	var startRes int32
@@ -158,7 +158,7 @@ func calcScore(q string, d *Data) (string, int32, []int32, int32, bool) {
 	var modifier int32
 
 	for k, v := range []string{d.Name, d.Parent, d.GenericName, strings.Join(d.Keywords, ","), d.Comment} {
-		score, pos, start := common.FuzzyScore(q, v)
+		score, pos, start := common.FuzzyScore(q, v, exact)
 
 		if score > scoreRes {
 			scoreRes = score

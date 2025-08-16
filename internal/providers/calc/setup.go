@@ -177,7 +177,7 @@ func saveToHistory(item *pb.QueryResponse_Item) {
 	saveHist()
 }
 
-func Query(qid uint32, iid uint32, query string, single bool) []*pb.QueryResponse_Item {
+func Query(qid uint32, iid uint32, query string, single bool, _ bool) []*pb.QueryResponse_Item {
 	start := time.Now()
 
 	if _, ok := results[qid]; !ok {

@@ -29,7 +29,7 @@ func Cleanup(qid uint32) {
 func Activate(qid uint32, identifier, action string, arguments string) {
 }
 
-func Query(qid uint32, iid uint32, query string, single bool) []*pb.QueryResponse_Item {
+func Query(qid uint32, iid uint32, query string, single bool, exact bool) []*pb.QueryResponse_Item {
 	start := time.Now()
 	entries := []*pb.QueryResponse_Item{}
 
@@ -58,7 +58,7 @@ func Query(qid uint32, iid uint32, query string, single bool) []*pb.QueryRespons
 						Field: "text",
 					}
 
-					e.Score, e.Fuzzyinfo.Positions, e.Fuzzyinfo.Start = common.FuzzyScore(query, e.Text)
+					e.Score, e.Fuzzyinfo.Positions, e.Fuzzyinfo.Start = common.FuzzyScore(query, e.Text, exact)
 				}
 
 				if e.Score > 0 || query == "" {
@@ -79,7 +79,7 @@ func Query(qid uint32, iid uint32, query string, single bool) []*pb.QueryRespons
 					Field: "text",
 				}
 
-				e.Score, e.Fuzzyinfo.Positions, e.Fuzzyinfo.Start = common.FuzzyScore(query, e.Text)
+				e.Score, e.Fuzzyinfo.Positions, e.Fuzzyinfo.Start = common.FuzzyScore(query, e.Text, exact)
 			}
 
 			if e.Score > 0 || query == "" {

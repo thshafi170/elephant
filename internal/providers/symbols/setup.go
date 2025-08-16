@@ -105,14 +105,14 @@ func Activate(qid uint32, identifier, action string, arguments string) {
 	}
 }
 
-func Query(qid uint32, iid uint32, query string, _ bool) []*pb.QueryResponse_Item {
+func Query(qid uint32, iid uint32, query string, _ bool, exact bool) []*pb.QueryResponse_Item {
 	start := time.Now()
 	entries := []*pb.QueryResponse_Item{}
 
 	var toFilter map[string]*Symbol
 
 	if query != "" {
-		data, ok := results.GetData(query, qid, iid, make(map[string]*Symbol))
+		data, ok := results.GetData(query, qid, iid, make(map[string]*Symbol), exact)
 		if ok {
 			toFilter = data
 		} else {
@@ -143,7 +143,7 @@ func Query(qid uint32, iid uint32, query string, _ bool) []*pb.QueryResponse_Ite
 			var bestStart int32
 
 			for _, m := range v.Searchable {
-				score, positions, start := common.FuzzyScore(query, m)
+				score, positions, start := common.FuzzyScore(query, m, exact)
 
 				if score > bestScore {
 					bestScore = score

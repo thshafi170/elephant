@@ -12,10 +12,18 @@ func init() {
 	algo.Init("default")
 }
 
-func FuzzyScore(input, target string) (int32, []int32, int32) {
+func FuzzyScore(input, target string, exact bool) (int32, []int32, int32) {
 	runes := []rune(input)
 	chars := util.ToChars([]byte(target))
-	res, pos := algo.FuzzyMatchV2(slices.ContainsFunc(runes, unicode.IsUpper), true, true, &chars, runes, true, nil)
+
+	var res algo.Result
+	var pos *[]int
+
+	if exact {
+		res, pos = algo.ExactMatchNaive(slices.ContainsFunc(runes, unicode.IsUpper), true, true, &chars, runes, true, nil)
+	} else {
+		res, pos = algo.FuzzyMatchV2(slices.ContainsFunc(runes, unicode.IsUpper), true, true, &chars, runes, true, nil)
+	}
 
 	var int32Slice []int32
 
