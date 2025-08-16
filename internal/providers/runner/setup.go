@@ -169,6 +169,8 @@ func Activate(qid uint32, identifier, action string, arguments string) {
 
 		if last != 0 {
 			h.Save(results.Queries[qid][last].Query, identifier)
+		} else {
+			h.Save("", identifier)
 		}
 	}
 }

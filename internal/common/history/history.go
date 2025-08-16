@@ -34,8 +34,8 @@ func (h *History) Save(query, identifier string) {
 
 	if _, ok := h.Data[query]; ok {
 		if val, ok := h.Data[query][identifier]; ok {
-			val.LastUsed = time.Now()
-			val.Amount = min(val.Amount+1, 10)
+			h.Data[query][identifier].LastUsed = time.Now()
+			h.Data[query][identifier].Amount = min(val.Amount+1, 10)
 		} else {
 			h.Data[query][identifier] = &HistoryData{
 				LastUsed: time.Now(),
@@ -72,16 +72,17 @@ func (h *History) Save(query, identifier string) {
 }
 
 func (h *History) FindUsage(query, identifier string) (int, time.Time) {
-	var longest int
 	var usage int
 	var lastUsed time.Time
 
 	for k, v := range h.Data {
-		if (strings.HasPrefix(query, k) || query == "") && len(k) > longest {
+		if strings.HasPrefix(query, k) || query == "" {
 			if n, ok := v[identifier]; ok {
-				usage = n.Amount
-				longest = len(k)
-				lastUsed = n.LastUsed
+				usage = usage + n.Amount
+
+				if n.LastUsed.After(lastUsed) {
+					lastUsed = n.LastUsed
+				}
 			}
 		}
 	}
