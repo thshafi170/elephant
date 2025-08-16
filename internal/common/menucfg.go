@@ -50,11 +50,11 @@ func (e Entry) CreateIdentifier() string {
 
 var (
 	menuConfigLoaded MenuConfig
-	menuname         = "menues"
-	Menues           = make(map[string]Menu)
+	menuname         = "menus"
+	Menus            = make(map[string]Menu)
 )
 
-func LoadMenues() {
+func LoadMenus() {
 	menuConfigLoaded = MenuConfig{
 		Config: Config{},
 		Paths:  []string{},
@@ -62,7 +62,7 @@ func LoadMenues() {
 
 	LoadConfig(menuname, menuConfigLoaded)
 
-	path := filepath.Join(ConfigDir(), "menues")
+	path := filepath.Join(ConfigDir(), "menus")
 
 	menuConfigLoaded.Paths = append(menuConfigLoaded.Paths, path)
 
@@ -101,11 +101,11 @@ func LoadMenues() {
 				m.Entries[k].Identifier = v.CreateIdentifier()
 
 				if v.SubMenu != "" {
-					m.Entries[k].Identifier = fmt.Sprintf("keepopen:menues:%s", v.SubMenu)
+					m.Entries[k].Identifier = fmt.Sprintf("keepopen:menus:%s", v.SubMenu)
 				}
 			}
 
-			Menues[m.Name] = m
+			Menus[m.Name] = m
 
 			return nil
 		}); err != nil {

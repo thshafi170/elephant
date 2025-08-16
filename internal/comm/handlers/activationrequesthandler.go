@@ -22,7 +22,7 @@ func (a *ActivateRequest) Handle(cid uint32, conn net.Conn, data []byte) {
 
 	provider := req.Provider
 
-	if strings.HasPrefix(provider, "menues:") {
+	if strings.HasPrefix(provider, "menus:") {
 		provider = strings.Split(provider, ":")[0]
 	}
 

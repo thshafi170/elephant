@@ -142,7 +142,7 @@ func (h *QueryRequest) Handle(cid uint32, conn net.Conn, data []byte) {
 	for _, v := range req.Providers {
 		query := req.Query
 
-		if strings.HasPrefix(v, "menues:") {
+		if strings.HasPrefix(v, "menus:") {
 			split := strings.Split(v, ":")
 			v = split[0]
 			query = fmt.Sprintf("%s:%s", split[1], query)

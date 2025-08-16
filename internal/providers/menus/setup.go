@@ -16,8 +16,8 @@ import (
 )
 
 var (
-	Name       = "menues"
-	NamePretty = "Menues"
+	Name       = "menus"
+	NamePretty = "Menus"
 )
 
 //go:embed other.toml
@@ -28,10 +28,10 @@ var screenshots string
 
 func PrintDoc() {
 	fmt.Printf("### %s\n", NamePretty)
-	fmt.Println("Custom menues.")
-	fmt.Println("Default location for menu definitions is `~/.config/elephant/menues/`.")
+	fmt.Println("Custom menus.")
+	fmt.Println("Default location for menu definitions is `~/.config/elephant/menus/`.")
 	util.PrintConfig(common.MenuConfig{}, Name)
-	fmt.Println("#### Example Menues")
+	fmt.Println("#### Example Menus")
 	fmt.Println()
 	fmt.Printf("```toml\n%s\n```", other)
 	fmt.Println()
@@ -47,7 +47,7 @@ func Activate(qid uint32, identifier, action string, arguments string) {
 	var menu common.Menu
 
 	identifier = strings.TrimPrefix(identifier, "keepopen:")
-	identifier = strings.TrimPrefix(identifier, "menues:")
+	identifier = strings.TrimPrefix(identifier, "menus:")
 
 	splits := strings.Split(arguments, common.GetElephantConfig().ArgumentDelimiter)
 	if len(splits) > 1 {
@@ -56,7 +56,7 @@ func Activate(qid uint32, identifier, action string, arguments string) {
 
 	openmenu := false
 
-	for _, v := range common.Menues {
+	for _, v := range common.Menus {
 		if identifier == v.Name {
 			menu = v
 			openmenu = true
@@ -129,7 +129,7 @@ func Query(qid uint32, iid uint32, query string, _ bool, exact bool) []*pb.Query
 		query = split[1]
 	}
 
-	for _, v := range common.Menues {
+	for _, v := range common.Menus {
 		if menu != "" && v.Name != menu || (!single && !v.GlobalSearch) {
 			continue
 		}

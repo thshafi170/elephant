@@ -19,5 +19,5 @@ func (a *MenuRequest) Handle(cid uint32, conn net.Conn, data []byte) {
 		return
 	}
 
-	ProviderUpdated <- fmt.Sprintf("%s:%s", "menues", req.Menu)
+	ProviderUpdated <- fmt.Sprintf("%s:%s", "menus", req.Menu)
 }

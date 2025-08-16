@@ -30,8 +30,8 @@ Communicating with `elephant` is done via unix-sockets and protobuf messages.
 - `calc/unit-conversion`
   - history
   - uses `qalq`
-- `menues`
-  - create custom menues
+- `menus`
+  - create custom menus
 - `providerlist`
   - ... just list of every provider/menu elephant has loaded
 

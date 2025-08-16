@@ -34,7 +34,7 @@ var (
 
 func Load() {
 	start := time.Now()
-	common.LoadMenues()
+	common.LoadMenus()
 	common.LoadGlobalConfig()
 
 	var mut sync.Mutex

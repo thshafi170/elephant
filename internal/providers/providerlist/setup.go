@@ -38,14 +38,14 @@ func Query(qid uint32, iid uint32, query string, single bool, exact bool) []*pb.
 			continue
 		}
 
-		if *v.Name == "menues" {
-			for _, v := range common.Menues {
+		if *v.Name == "menus" {
+			for _, v := range common.Menus {
 				if v.HideFromProviderlist {
 					continue
 				}
 
 				e := &pb.QueryResponse_Item{
-					Identifier: fmt.Sprintf("%s:%s", "menues", v.Name),
+					Identifier: fmt.Sprintf("%s:%s", "menus", v.Name),
 					Text:       v.NamePretty,
 					Subtext:    v.Description,
 					Provider:   Name,

@@ -56,8 +56,8 @@ func init() {
 		for p := range ProviderUpdated {
 			value := p
 
-			if strings.HasPrefix(p, "menues:") {
-				p = "menues"
+			if strings.HasPrefix(p, "menus:") {
+				p = "menus"
 			}
 
 			for k, v := range subs {
