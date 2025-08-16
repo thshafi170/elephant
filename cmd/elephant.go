@@ -76,6 +76,11 @@ func main() {
 				Aliases: []string{"d"},
 				Usage:   "generates a markdown documentation",
 				Action: func(ctx context.Context, cmd *cli.Command) error {
+					logger := slog.New(slog.DiscardHandler)
+					slog.SetDefault(logger)
+
+					providers.Load()
+
 					providers.Load()
 					util.GenerateDoc()
 					return nil
