@@ -48,7 +48,7 @@ func Activate(qid uint32, identifier, action string, arguments string) {
 		run := strings.TrimSpace(fmt.Sprintf("%s xdg-open '%s'", common.LaunchPrefix(config.LaunchPrefix), path))
 
 		if forceTerminalForFile(path) {
-			run = wrapWithTerminal(run)
+			run = common.WrapWithTerminal(run)
 		}
 
 		cmd := exec.Command("sh", "-c", run)
@@ -90,14 +90,6 @@ func Activate(qid uint32, identifier, action string, arguments string) {
 	default:
 		slog.Error(Name, "nosuchaction", action)
 	}
-}
-
-func wrapWithTerminal(in string) string {
-	if terminal == "" {
-		return in
-	}
-
-	return fmt.Sprintf("%s %s", terminal, in)
 }
 
 func forceTerminalForFile(file string) bool {

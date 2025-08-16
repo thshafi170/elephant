@@ -19,9 +19,8 @@ import (
 )
 
 var (
-	paths    []string
-	results  = providers.QueryData[[]string]{}
-	terminal string
+	paths   []string
+	results = providers.QueryData[[]string]{}
 )
 
 var terminalApps = make(map[string]struct{})
@@ -50,7 +49,6 @@ func init() {
 	common.LoadConfig(Name, config)
 
 	findTerminalApps()
-	terminal = common.GetTerminal()
 
 	paths = []string{}
 	home, _ := os.UserHomeDir()

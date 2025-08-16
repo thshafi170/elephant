@@ -125,8 +125,15 @@ func Cleanup(qid uint32) {
 	results.Unlock()
 }
 
+const (
+	ActionRun           = "run"
+	ActionRunInTerminal = "runterminal"
+)
+
 func Activate(qid uint32, identifier, action string, arguments string) {
 	bin := ""
+
+	arguments = strings.Join(strings.Fields(arguments)[1:], " ")
 
 	for _, v := range items {
 		if v.Identifier == identifier {
@@ -135,7 +142,12 @@ func Activate(qid uint32, identifier, action string, arguments string) {
 		}
 	}
 
-	cmd := exec.Command("sh", "-c", strings.TrimSpace(fmt.Sprintf("%s %s", bin, arguments)))
+	run := strings.TrimSpace(fmt.Sprintf("%s %s", bin, arguments))
+	if action == ActionRunInTerminal {
+		run = common.WrapWithTerminal(run)
+	}
+
+	cmd := exec.Command("sh", "-c", run)
 
 	err := cmd.Start()
 	if err != nil {

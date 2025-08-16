@@ -205,6 +205,7 @@ func Query(qid uint32, iid uint32, query string, single bool) []*pb.QueryRespons
 		e := &pb.QueryResponse_Item{
 			Identifier: md5str,
 			Text:       config.Placeholder,
+			Icon:       config.Icon,
 			Subtext:    query,
 			Provider:   Name,
 			Score:      int32(config.MaxItems) + 1,
@@ -237,6 +238,7 @@ func Query(qid uint32, iid uint32, query string, single bool) []*pb.QueryRespons
 				Identifier: v.Identifier,
 				Text:       v.Result,
 				Score:      int32(config.MaxItems - k),
+				Icon:       config.Icon,
 				Subtext:    v.Input,
 				Provider:   Name,
 				Type:       pb.QueryResponse_REGULAR,

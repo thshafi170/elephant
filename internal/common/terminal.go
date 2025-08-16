@@ -1,9 +1,16 @@
 package common
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 )
+
+var terminal = ""
+
+func init() {
+	terminal = GetTerminal()
+}
 
 func GetTerminal() string {
 	envVars := []string{"TERM", "TERMINAL"}
@@ -61,4 +68,12 @@ func GetTerminal() string {
 	}
 
 	return ""
+}
+
+func WrapWithTerminal(in string) string {
+	if terminal == "" {
+		return in
+	}
+
+	return fmt.Sprintf("%s %s", terminal, in)
 }
