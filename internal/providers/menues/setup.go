@@ -36,6 +36,11 @@ func Activate(qid uint32, identifier, action string, arguments string) {
 	identifier = strings.TrimPrefix(identifier, "keepopen:")
 	identifier = strings.TrimPrefix(identifier, "menues:")
 
+	splits := strings.Split(arguments, common.GetElephantConfig().ArgumentDelimiter)
+	if len(splits) > 1 {
+		arguments = splits[1]
+	}
+
 	openmenu := false
 
 	for _, v := range common.Menues {
@@ -71,16 +76,21 @@ func Activate(qid uint32, identifier, action string, arguments string) {
 
 	pipe := false
 
+	val := e.Value
+	if val == "" && len(splits) > 1 {
+		val = arguments
+	}
+
 	if !strings.Contains(run, "%RESULT%") {
 		pipe = true
 	} else {
-		run = strings.ReplaceAll(run, "%RESULT%", e.Value)
+		run = strings.ReplaceAll(run, "%RESULT%", val)
 	}
 
 	cmd := exec.Command("sh", "-c", run)
 
 	if pipe && e.Value != "" {
-		cmd.Stdin = strings.NewReader(e.Value)
+		cmd.Stdin = strings.NewReader(val)
 	}
 
 	err := cmd.Start()

@@ -35,6 +35,7 @@ var (
 func Load() {
 	start := time.Now()
 	common.LoadMenues()
+	common.LoadGlobalConfig()
 
 	var mut sync.Mutex
 	have := []string{}

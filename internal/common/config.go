@@ -15,6 +15,24 @@ type Config struct {
 	Icon string `koanf:"icon" desc:"icon for provider" default:"depends on provider"`
 }
 
+type ElephantConfig struct {
+	ArgumentDelimiter string `koanf:"argument_delimited" desc:"global delimiter for arguments" default:"#"`
+}
+
+var elephantConfig ElephantConfig
+
+func LoadGlobalConfig() {
+	elephantConfig = ElephantConfig{
+		ArgumentDelimiter: "#",
+	}
+
+	LoadConfig("elephant", elephantConfig)
+}
+
+func GetElephantConfig() *ElephantConfig {
+	return &elephantConfig
+}
+
 func LoadConfig(provider string, config any) {
 	defaults := koanf.New(".")
 

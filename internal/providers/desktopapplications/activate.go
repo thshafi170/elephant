@@ -13,6 +13,13 @@ func Activate(qid uint32, identifier, action string, arguments string) {
 	toRun := ""
 	prefix := common.LaunchPrefix(config.LaunchPrefix)
 
+	splits := strings.Split(arguments, common.GetElephantConfig().ArgumentDelimiter)
+	if len(splits) > 1 {
+		arguments = splits[1]
+	} else {
+		arguments = ""
+	}
+
 	if prefix == "" {
 		parts := strings.Split(identifier, ":")
 
@@ -30,7 +37,7 @@ func Activate(qid uint32, identifier, action string, arguments string) {
 		toRun = fmt.Sprintf("%s %s", prefix, identifier)
 	}
 
-	toRun = fmt.Sprintf("%s %s", toRun, arguments)
+	toRun = strings.TrimSpace(fmt.Sprintf("%s %s", toRun, arguments))
 
 	cmd := exec.Command("sh", "-c", toRun)
 
