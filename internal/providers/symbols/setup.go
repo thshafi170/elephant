@@ -67,7 +67,7 @@ func PrintDoc() {
 
 	fmt.Println()
 	fmt.Println()
-	util.PrintConfig(Config{})
+	util.PrintConfig(Config{}, Name)
 }
 
 func Cleanup(qid uint32) {

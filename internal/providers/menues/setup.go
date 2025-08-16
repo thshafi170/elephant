@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"fmt"
 	"log/slog"
 	"os/exec"
@@ -19,11 +20,23 @@ var (
 	NamePretty = "Menues"
 )
 
+//go:embed other.toml
+var other string
+
+//go:embed screenshots.toml
+var screenshots string
+
 func PrintDoc() {
 	fmt.Printf("### %s\n", NamePretty)
 	fmt.Println("Custom menues.")
+	fmt.Println("Default location for menu definitions is `~/.config/elephant/menues/`.")
+	util.PrintConfig(common.MenuConfig{}, Name)
+	fmt.Println("#### Example Menues")
 	fmt.Println()
-	util.PrintConfig(common.MenuConfig{})
+	fmt.Printf("```toml\n%s\n```", other)
+	fmt.Println()
+	fmt.Printf("```toml\n%s\n```", screenshots)
+	fmt.Println()
 }
 
 func Cleanup(qid uint32) {

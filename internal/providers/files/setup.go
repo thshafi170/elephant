@@ -73,7 +73,7 @@ func PrintDoc() {
 	fmt.Printf("### %s\n", NamePretty)
 	fmt.Println("Search files and folders.")
 	fmt.Println()
-	util.PrintConfig(Config{})
+	util.PrintConfig(Config{}, Name)
 }
 
 func Cleanup(qid uint32) {

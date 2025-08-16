@@ -10,5 +10,5 @@ func PrintDoc() {
 	fmt.Printf("### %s\n", NamePretty)
 	fmt.Println("Provides access to all your installed desktop applications.")
 	fmt.Println()
-	util.PrintConfig(Config{})
+	util.PrintConfig(Config{}, Name)
 }

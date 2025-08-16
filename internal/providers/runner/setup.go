@@ -115,7 +115,7 @@ func PrintDoc() {
 	fmt.Printf("### %s\n", NamePretty)
 	fmt.Println("Run everything in your $PATH!")
 	fmt.Println()
-	util.PrintConfig(Config{})
+	util.PrintConfig(Config{}, Name)
 }
 
 func Cleanup(qid uint32) {

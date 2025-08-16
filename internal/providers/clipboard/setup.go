@@ -236,7 +236,7 @@ func PrintDoc() {
 	fmt.Printf("### %s\n", NamePretty)
 	fmt.Println("Provides access to your clipboard history.")
 	fmt.Println()
-	util.PrintConfig(Config{})
+	util.PrintConfig(Config{}, Name)
 }
 
 func Cleanup(qid uint32) {}

@@ -34,7 +34,8 @@ func GenerateDoc() {
 	}
 }
 
-func PrintConfig(c any) {
+func PrintConfig(c any, name string) {
+	fmt.Printf("`~/.config/elephant/%s.toml`\n", name)
 	printStructTable(c, getStructName(c))
 }
 
