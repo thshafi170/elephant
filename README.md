@@ -15,11 +15,25 @@ Communicating with `elephant` is done via unix-sockets and protobuf messages.
 ## Current Providers
 
 - `desktopapplications`
+  - auto-detect `uwsm` or `app2unit`
+  - history
 - `files`
+  - preview (text/image)
+  - open, open path, copy, copy path
 - `clipboard`
+  - supports images
+  - history
 - `runner`
+  - provide explicit list or let elephant look at $PATH
 - `symbols/emojis`
+  - different locales
 - `calc/unit-conversion`
+  - history
+  - uses `qalq`
+- `menues`
+  - create custom menues
+- `providerlist`
+  - ... just list of every provider/menu elephant has loaded
 
 ## Quick-Guide
 
