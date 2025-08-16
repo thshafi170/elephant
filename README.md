@@ -1,60 +1,247 @@
-# Elephant - cuz it's phat.
+# Elephant 🐘
 
-`elephant` is a service providing data and actions via various data-providers. It is meant to be a backend to create f.e. custom launchers.
+**Elephant** - _cuz it's phat_ - is a powerful data provider service and backend for building custom application launchers and desktop utilities. It provides various data sources and actions through a plugin-based architecture, communicating via Unix sockets and Protocol Buffers.
 
 [![Discord](https://img.shields.io/discord/1402235361463242964?logo=discord)](https://discord.gg/mGQWBQHASt)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-## Current State
+## Overview
 
-The project just started and is therefore highly wip.
+Elephant acts as a unified backend service that aggregates data from various sources (desktop applications, files, clipboard history, etc.) and provides a consistent interface for frontend applications like custom launchers, productivity tools, or desktop widgets.
 
-## Communication
+## Features
 
-Communicating with `elephant` is done via unix-sockets and protobuf messages.
+### Current Providers
 
-## Current Providers
+- **🚀 Desktop Applications**
+  - Auto-detection of `uwsm` or `app2unit`
+  - Application launch history
+  - Desktop entry parsing
 
-- `desktopapplications`
-  - auto-detect `uwsm` or `app2unit`
-  - history
-- `files`
-  - preview (text/image)
-  - open, open path, copy, copy path
-- `clipboard`
-  - supports images
-  - history
-- `runner`
-  - provide explicit list or let elephant look at $PATH
-- `symbols/emojis`
-  - different locales
-- `calc/unit-conversion`
-  - history
-  - uses `qalq`
-- `menus`
-  - create custom menus
-- `providerlist`
-  - ... just list of every provider/menu elephant has loaded
+- **📁 Files**
+  - File preview (text/image)
+  - File operations: open, copy path, copy content
+  - Directory navigation
 
-## Quick-Guide
+- **📋 Clipboard**
+  - Text and image clipboard history
+  - Clipboard content management
 
-1. You need: `elephant`
-2. ... a provider
-3. something to make unix socket calls with (or use `elephant query/activate` for testing)
+- **⚡ Runner**
+  - Command execution from explicit lists
+  - `$PATH` scanning for executables
+
+- **🔣 Symbols/Emojis**
+  - Multi-locale emoji and symbol support
+  - Unicode character database
+
+- **🧮 Calculator/Unit Conversion**
+  - Mathematical calculations with history
+  - Unit conversion using `qalc`
+
+- **📋 Custom Menus**
+  - User-defined menu creation
+  - Custom action definitions
+
+- **📊 Provider List**
+  - Dynamic listing of all loaded providers and menus
+
+## Installation
+
+### Prerequisites
+
+- Go 1.24.5 or later
+- Unix-like operating system (Linux, macOS)
+
+### Quick Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/abenz1267/elephant
+cd elephant
+
+# Build and install the main binary
+cd cmd
+go install elephant.go
+
+# Create configuration directories
+mkdir -p ~/.config/elephant/providers
+
+# Build and install a provider (example: desktop applications)
+cd ../internal/providers/desktopapplications
+go build -buildmode=plugin
+cp desktopapplications.so ~/.config/elephant/providers/
+```
+
+### Building Other Providers
+
+Each provider can be built as a plugin:
+
+```bash
+# Files provider
+cd internal/providers/files
+go build -buildmode=plugin
+cp files.so ~/.config/elephant/providers/
+
+# Clipboard provider
+cd internal/providers/clipboard
+go build -buildmode=plugin
+cp clipboard.so ~/.config/elephant/providers/
+
+# Calculator provider
+cd internal/providers/calc
+go build -buildmode=plugin
+cp calc.so ~/.config/elephant/providers/
+```
+
+## Usage
+
+### Starting the Service
+
+```bash
+# Start elephant with default configuration
+elephant
+
+# Start with debug logging
+elephant --debug
+
+# Use custom configuration directory
+elephant --config /path/to/config
+```
+
+### Command Line Interface
+
+Elephant includes a built-in client for testing and basic operations:
+
+#### Querying Data
+
+```bash
+# Query provider (providers;query;limit;exactsearch)
+elephant query "files;documents;10;false"
+```
+
+#### Activating Items
+
+```bash
+# activate item (qid;provider;identifier;action;query)
+elephant activate "1;files;<identifier>;open;"
+```
+
+#### Other Commands
+
+```bash
+# List all installed providers
+elephant listproviders
+
+# Open a custom menu, requires a subscribed frontend.
+elephant menu "screenshots"
+
+# Show version
+elephant version
+
+# Generate configuration documentation
+elephant generatedoc
+```
+
+### Configuration
+
+Elephant uses a configuration directory structure:
 
 ```
-mkdir ~/.config/elephant
-mkdir ~/.config/elephant/providers
-git clone https://github.com/abenz1267/elephant && cd elephant/cmd && go install elephant.go
-cd ../internals/providers/desktopapplications
-go build -buildmode=plugin && cp desktopapplications.so ~/.config/elephant/providers/
+~/.config/elephant/
+├── elephant.toml        # Main configuration
+├── .env                 # Environment variables
+└── providers/           # Provider plugins
+    ├── files.so
+    ├── desktopapplications.so
+    └── ...
 ```
 
-Once you have this setup, you can start using `elephant`.
+## API & Integration
 
-### Using `elephant` as client
+### Communication Protocol
 
-`elephant` has a built-in tiny client which is meant for testing purpose only.
+Elephant uses Unix domain sockets for IPC and Protocol Buffers for message serialization. The main message types are:
 
-Querying: `elephant query "files;somefile;5;false"` => the arguments position correlate to their respective protobuf file.
+- **Query Messages**: Request data from providers
+- **Activation Messages**: Execute actions
+- **Menu Messages**: Request custom menu data
+- **Subscribe Messages**: Listen for real-time updates
 
-Activating: `elephant activate "1;desktopapplications;/usr/share/applications/firefox-developer-edition.desktop:new-private-window;"`
+### Building Client Applications
+
+To integrate with Elephant, your application needs to:
+
+1. Connect to the Unix socket (typically at `/tmp/elephant.sock`)
+2. Send Protocol Buffer messages
+3. Handle responses and updates
+
+See the `pkg/pb/` directory for Protocol Buffer definitions.
+
+## Development
+
+### Project Structure
+
+```
+elephant/
+├── cmd/                 # Main application entry point
+├── internal/
+│   ├── comm/           # Communication layer (Unix sockets, protobuf)
+│   ├── common/         # Shared utilities and configuration
+│   ├── providers/      # Data provider plugins
+│   └── util/          # Helper utilities
+├── pkg/pb/            # Protocol Buffer definitions
+└── flake.nix          # Nix development environment
+```
+
+### Creating Custom Providers
+
+Providers are Go plugins that implement the provider interface. See existing providers in `internal/providers/` for examples.
+
+### Building from Source
+
+```bash
+# Clone repository
+git clone https://github.com/abenz1267/elephant
+cd elephant
+
+# Install dependencies
+go mod download
+
+# Build main binary
+go build -o elephant cmd/elephant.go
+
+# Run tests
+go test ./...
+```
+
+### Development Environment
+
+A Nix flake is provided for reproducible development:
+
+```bash
+nix develop
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
+
+Please ensure your code follows Go best practices and includes appropriate documentation.
+
+## Current Status
+
+⚠️ **Work in Progress**: This project is in active development and the API may change. Use with caution in production environments.
+
+## License
+
+This project is licensed under the GNU General Public License v3.0. See [LICENSE](LICENSE) for details.
+
+## Support
+
+- 💬 [Discord Community](https://discord.gg/mGQWBQHASt)
+- 🐛 [Issue Tracker](https://github.com/abenz1267/elephant/issues)
+
