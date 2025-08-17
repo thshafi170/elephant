@@ -214,7 +214,7 @@ func Query(qid uint32, iid uint32, query string, _ bool, exact bool) []*pb.Query
 		}
 
 		var usageScore int32
-		if config.History {
+		if config.History && (e.Score > 0 || query == "") {
 			usageScore = h.CalcUsageScore(query, e.Identifier)
 			e.Score = e.Score + usageScore
 		}
