@@ -34,7 +34,8 @@ func init() {
 	start := time.Now()
 	config = &Config{
 		Config: common.Config{
-			Icon: "applications-other",
+			Icon:     "applications-other",
+			MinScore: 30,
 		},
 		ShowActions:             false,
 		ShowGeneric:             false,

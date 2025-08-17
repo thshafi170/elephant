@@ -24,7 +24,7 @@ import (
 var (
 	Name       = "runner"
 	NamePretty = "Runner"
-	results    = providers.QueryData[[]Item]{}
+	results    = providers.QueryData{}
 )
 
 type ExplicitItem struct {
@@ -55,7 +55,8 @@ func init() {
 
 	config = &Config{
 		Config: common.Config{
-			Icon: "utilities-terminal",
+			Icon:     "utilities-terminal",
+			MinScore: 50,
 		},
 		History: true,
 	}
@@ -168,7 +169,7 @@ func Activate(qid uint32, identifier, action string, arguments string) {
 		}
 
 		if last != 0 {
-			h.Save(results.Queries[qid][last].Query, identifier)
+			h.Save(results.Queries[qid][last], identifier)
 		} else {
 			h.Save("", identifier)
 		}
@@ -178,20 +179,11 @@ func Activate(qid uint32, identifier, action string, arguments string) {
 func Query(qid uint32, iid uint32, query string, _ bool, exact bool) []*pb.QueryResponse_Item {
 	entries := []*pb.QueryResponse_Item{}
 
-	var toFilter []Item
-
 	if query != "" {
-		data, ok := results.GetData(query, qid, iid, []Item{}, exact)
-		if ok {
-			toFilter = data
-		} else {
-			toFilter = items
-		}
-	} else {
-		toFilter = items
+		results.GetData(query, qid, iid, exact)
 	}
 
-	for _, v := range toFilter {
+	for _, v := range items {
 		e := &pb.QueryResponse_Item{
 			Identifier: v.Identifier,
 			Text:       v.Bin,
@@ -228,12 +220,6 @@ func Query(qid uint32, iid uint32, query string, _ bool, exact bool) []*pb.Query
 		}
 
 		if e.Score > 0 || query == "" {
-			if query != "" {
-				results.Lock()
-				results.Queries[qid][iid].Results = append(results.Queries[qid][iid].Results, v)
-				results.Unlock()
-			}
-
 			entries = append(entries, e)
 		}
 	}

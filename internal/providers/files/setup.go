@@ -20,7 +20,7 @@ import (
 
 var (
 	paths   []string
-	results = providers.QueryData[[]string]{}
+	results = providers.QueryData{}
 )
 
 var terminalApps = make(map[string]struct{})
@@ -41,7 +41,8 @@ func init() {
 
 	config = &Config{
 		Config: common.Config{
-			Icon: "folder",
+			Icon:     "folder",
+			MinScore: 50,
 		},
 		LaunchPrefix: "",
 	}

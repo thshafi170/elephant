@@ -13,35 +13,20 @@ import (
 	"github.com/abenz1267/elephant/pkg/pb/pb"
 )
 
-var results providers.QueryData[map[string]*DesktopFile]
-
-func init() {
-	results = providers.QueryData[map[string]*DesktopFile]{}
-}
+var results = providers.QueryData{}
 
 func Query(qid uint32, iid uint32, query string, _ bool, exact bool) []*pb.QueryResponse_Item {
 	start := time.Now()
 	desktop := os.Getenv("XDG_CURRENT_DESKTOP")
 	entries := []*pb.QueryResponse_Item{}
 
-	var toFilter map[string]*DesktopFile
-
 	isSub := qid >= 100_000_000
 
 	if !isSub && query != "" {
-		data, ok := results.GetData(query, qid, iid, make(map[string]*DesktopFile), exact)
-		if ok {
-			toFilter = data
-		} else {
-			toFilter = files
-		}
-	} else {
-		toFilter = files
+		results.GetData(query, qid, iid, exact)
 	}
 
-	slog.Info(Name, "queryingfiles", len(toFilter))
-
-	for k, v := range toFilter {
+	for k, v := range files {
 		if len(v.NotShowIn) != 0 && slices.Contains(v.NotShowIn, desktop) || len(v.OnlyShowIn) != 0 && !slices.Contains(v.OnlyShowIn, desktop) || v.Hidden || v.NoDisplay {
 			continue
 		}
@@ -79,14 +64,8 @@ func Query(qid uint32, iid uint32, query string, _ bool, exact bool) []*pb.Query
 		}
 
 		if usageScore != 0 || config.ShowActions && config.ShowGeneric || !config.ShowActions || (config.ShowActions && len(v.Actions) == 0) || query == "" {
-			if e.Score > 0 || query == "" {
+			if e.Score >= config.MinScore || query == "" {
 				entries = append(entries, e)
-
-				if !isSub && query != "" {
-					results.Lock()
-					results.Queries[qid][iid].Results[k] = v
-					results.Unlock()
-				}
 			}
 		}
 
@@ -124,23 +103,11 @@ func Query(qid uint32, iid uint32, query string, _ bool, exact bool) []*pb.Query
 			}
 
 			if (query == "" && config.ShowActionsWithoutQuery) || (query != "" && config.ShowActions) || usageScore != 0 {
-				if e.Score > 0 || query == "" {
+				if e.Score >= config.MinScore || query == "" {
 					entries = append(entries, e)
-
-					if !isSub && query != "" {
-						results.Lock()
-						results.Queries[qid][iid].Results[k] = v
-						results.Unlock()
-					}
 				}
 			}
 		}
-	}
-
-	if !isSub && query != "" {
-		results.Lock()
-		results.Queries[qid][iid].Done = true
-		results.Unlock()
 	}
 
 	if !isSub {

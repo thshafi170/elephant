@@ -21,7 +21,7 @@ var (
 	Name       = "symbols"
 	NamePretty = "Symbols/Emojis"
 	h          = history.Load(Name)
-	results    = providers.QueryData[map[string]*Symbol]{}
+	results    = providers.QueryData{}
 )
 
 type Config struct {
@@ -37,7 +37,8 @@ func init() {
 
 	config = &Config{
 		Config: common.Config{
-			Icon: "face-smile",
+			Icon:     "face-smile",
+			MinScore: 50,
 		},
 		Locale:  "en",
 		History: false,
@@ -100,7 +101,7 @@ func Activate(qid uint32, identifier, action string, arguments string) {
 		}
 
 		if last != 0 {
-			h.Save(results.Queries[qid][last].Query, identifier)
+			h.Save(results.Queries[qid][last], identifier)
 		} else {
 			h.Save("", identifier)
 		}
@@ -111,20 +112,11 @@ func Query(qid uint32, iid uint32, query string, _ bool, exact bool) []*pb.Query
 	start := time.Now()
 	entries := []*pb.QueryResponse_Item{}
 
-	var toFilter map[string]*Symbol
-
 	if query != "" {
-		data, ok := results.GetData(query, qid, iid, make(map[string]*Symbol), exact)
-		if ok {
-			toFilter = data
-		} else {
-			toFilter = symbols
-		}
-	} else {
-		toFilter = symbols
+		results.GetData(query, qid, iid, exact)
 	}
 
-	for k, v := range toFilter {
+	for k, v := range symbols {
 		e := &pb.QueryResponse_Item{
 			Identifier: k,
 			Text:       v.CP,
@@ -170,12 +162,6 @@ func Query(qid uint32, iid uint32, query string, _ bool, exact bool) []*pb.Query
 		}
 
 		if usageScore != 0 || e.Score > 0 || query == "" {
-			if query != "" {
-				results.Lock()
-				results.Queries[qid][iid].Results[k] = v
-				results.Unlock()
-			}
-
 			entries = append(entries, e)
 		}
 	}

@@ -1,51 +1,29 @@
 package providers
 
 import (
-	"strings"
 	"sync"
 )
 
-type Iteration[T any] struct {
-	Query   string
-	Done    bool
-	Exact   bool
-	Results T
-}
-
-type QueryData[T any] struct {
+type QueryData struct {
 	sync.Mutex
-	Queries map[uint32]map[uint32]*Iteration[T]
+	Queries map[uint32]map[uint32]string
 }
 
-func (results *QueryData[T]) GetData(query string, qid, iid uint32, data T, exact bool) (T, bool) {
+func (results *QueryData) GetData(query string, qid, iid uint32, exact bool) {
 	results.Lock()
 	defer results.Unlock()
 
-	if q, ok := results.Queries[qid]; ok {
+	if _, ok := results.Queries[qid]; ok {
 		if _, ok := results.Queries[qid][iid]; !ok {
-			results.Queries[qid][iid] = &Iteration[T]{Results: data, Query: query, Exact: exact}
+			results.Queries[qid][iid] = query
 		}
 
-		var longestid uint32
-		var longest int
-
-		for i, v := range q {
-			if strings.HasPrefix(query, v.Query) && v.Done && len(v.Query) > longest && v.Exact == exact {
-				longestid = i
-				longest = len(v.Query)
-			}
-		}
-
-		if longestid != 0 {
-			return q[longestid].Results, true
-		}
-
-		return data, false
+		return
 	} else {
-		results.Queries = make(map[uint32]map[uint32]*Iteration[T])
-		results.Queries[qid] = map[uint32]*Iteration[T]{}
-		results.Queries[qid][iid] = &Iteration[T]{Results: data, Query: query, Exact: exact}
+		results.Queries = make(map[uint32]map[uint32]string)
+		results.Queries[qid] = map[uint32]string{}
+		results.Queries[qid][iid] = query
 
-		return data, false
+		return
 	}
 }

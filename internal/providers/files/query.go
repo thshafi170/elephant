@@ -14,22 +14,11 @@ func Query(qid uint32, iid uint32, query string, _ bool, exact bool) []*pb.Query
 	start := time.Now()
 	entries := []*pb.QueryResponse_Item{}
 
-	var toFilter []string
-
 	if query != "" {
-		data, ok := results.GetData(query, qid, iid, []string{}, exact)
-		if ok {
-			toFilter = data
-		} else {
-			toFilter = paths
-		}
-	} else {
-		toFilter = paths
+		results.GetData(query, qid, iid, exact)
 	}
 
-	slog.Info(Name, "queryingfiles", len(toFilter))
-
-	for _, v := range toFilter {
+	for _, v := range paths {
 		common.FuzzyScore(query, v, exact)
 
 		md5 := md5.Sum([]byte(v))
@@ -52,20 +41,8 @@ func Query(qid uint32, iid uint32, query string, _ bool, exact bool) []*pb.Query
 		}
 
 		if e.Score > 0 || query == "" {
-			if query != "" {
-				results.Lock()
-				results.Queries[qid][iid].Results = append(results.Queries[qid][iid].Results, v)
-				results.Unlock()
-			}
-
 			entries = append(entries, e)
 		}
-	}
-
-	if query != "" {
-		results.Lock()
-		results.Queries[qid][iid].Done = true
-		results.Unlock()
 	}
 
 	slog.Info(Name, "queryresult", len(entries), "time", time.Since(start))

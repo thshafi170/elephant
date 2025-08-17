@@ -12,7 +12,8 @@ import (
 )
 
 type Config struct {
-	Icon string `koanf:"icon" desc:"icon for provider" default:"depends on provider"`
+	Icon     string `koanf:"icon" desc:"icon for provider" default:"depends on provider"`
+	MinScore int32  `koanf:"min_score" desc:"minimum score for items to be displayed" default:"depends on provider"`
 }
 
 type ElephantConfig struct {

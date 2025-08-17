@@ -48,7 +48,8 @@ func init() {
 
 	config = &Config{
 		Config: common.Config{
-			Icon: "user-bookmarks",
+			Icon:     "user-bookmarks",
+			MinScore: 30,
 		},
 		MaxItems: 100,
 	}
