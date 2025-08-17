@@ -65,4 +65,6 @@ func Activate(qid uint32, identifier, action string, arguments string) {
 			h.Save("", identifier)
 		}
 	}
+
+	slog.Info(Name, "activated", identifier)
 }

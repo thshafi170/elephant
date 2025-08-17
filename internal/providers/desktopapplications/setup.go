@@ -22,12 +22,13 @@ var (
 
 type Config struct {
 	common.Config           `koanf:",squash"`
-	LaunchPrefix            string `koanf:"launch_prefix" desc:"overrides the default app2unit or uwsm prefix, if set. 'CLEAR' to not prefix." default:""`
-	Locale                  string `koanf:"locale" desc:"to override systems locale" default:""`
-	ShowActions             bool   `koanf:"show_actions" desc:"include application actions, f.e. 'New Private Window' for Firefox" default:"false"`
-	ShowGeneric             bool   `koanf:"show_generic" desc:"include generic info when show_actions is true" default:"false"`
-	ShowActionsWithoutQuery bool   `koanf:"show_actions_without_query" desc:"show application actions, if the search query is empty" default:"false"`
-	History                 bool   `koanf:"history" desc:"make use of history for sorting" default:"false"`
+	LaunchPrefix            string            `koanf:"launch_prefix" desc:"overrides the default app2unit or uwsm prefix, if set. 'CLEAR' to not prefix." default:""`
+	Locale                  string            `koanf:"locale" desc:"to override systems locale" default:""`
+	ShowActions             bool              `koanf:"show_actions" desc:"include application actions, f.e. 'New Private Window' for Firefox" default:"false"`
+	ShowGeneric             bool              `koanf:"show_generic" desc:"include generic info when show_actions is true" default:"false"`
+	ShowActionsWithoutQuery bool              `koanf:"show_actions_without_query" desc:"show application actions, if the search query is empty" default:"false"`
+	History                 bool              `koanf:"history" desc:"make use of history for sorting" default:"false"`
+	Aliases                 map[string]string `koanf:"aliases" desc:"setup aliases for applications. Matched aliases will always be placed on top of the list. Example: 'ffp' => '<identifier>'. Check elephant log output when activating an item to get its identifier." default:""`
 }
 
 func init() {
@@ -41,6 +42,7 @@ func init() {
 		ShowGeneric:             false,
 		ShowActionsWithoutQuery: false,
 		History:                 false,
+		Aliases:                 map[string]string{},
 	}
 
 	common.LoadConfig(Name, config)

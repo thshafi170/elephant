@@ -26,6 +26,11 @@ func Query(qid uint32, iid uint32, query string, _ bool, exact bool) []*pb.Query
 		results.GetData(query, qid, iid, exact)
 	}
 
+	alias := ""
+	if val, ok := config.Aliases[query]; ok {
+		alias = val
+	}
+
 	for k, v := range files {
 		if len(v.NotShowIn) != 0 && slices.Contains(v.NotShowIn, desktop) || len(v.OnlyShowIn) != 0 && !slices.Contains(v.OnlyShowIn, desktop) || v.Hidden || v.NoDisplay {
 			continue
@@ -39,6 +44,12 @@ func Query(qid uint32, iid uint32, query string, _ bool, exact bool) []*pb.Query
 			Subtext:    v.GenericName,
 			Icon:       v.Icon,
 			Provider:   Name,
+		}
+
+		if e.Identifier == alias {
+			e.Score = 1_000_000
+			entries = append(entries, e)
+			continue
 		}
 
 		var match string
@@ -78,6 +89,12 @@ func Query(qid uint32, iid uint32, query string, _ bool, exact bool) []*pb.Query
 				Subtext:    v.Name,
 				Icon:       a.Icon,
 				Provider:   Name,
+			}
+
+			if e.Identifier == alias {
+				e.Score = 1_000_000
+				entries = append(entries, e)
+				continue
 			}
 
 			var match string
