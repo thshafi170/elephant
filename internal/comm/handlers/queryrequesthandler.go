@@ -31,9 +31,11 @@ type queryData struct {
 }
 
 var (
-	qid        atomic.Uint32
-	queries    = make(map[uint32]map[uint32]*queryData)
-	queryMutex sync.Mutex
+	qid                              atomic.Uint32
+	queries                          = make(map[uint32]map[uint32]*queryData)
+	queryMutex                       sync.Mutex
+	MaxGlobalItemsToDisplayWebsearch = 0
+	WebsearchPrefixes                = make(map[string]string)
 )
 
 func handleAsync(qid, iid uint32, conn net.Conn) {
@@ -74,6 +76,16 @@ func (h *QueryRequest) Handle(cid uint32, conn net.Conn, data []byte) {
 		slog.Error("queryhandler", "protobuf", err)
 
 		return
+	}
+
+	wsprefix := ""
+
+	if slices.Contains(req.Providers, "websearch") {
+		for k, v := range WebsearchPrefixes {
+			if strings.HasPrefix(req.Query, k) {
+				wsprefix = v
+			}
+		}
 	}
 
 	queryMutex.Lock()
@@ -175,7 +187,13 @@ func (h *QueryRequest) Handle(cid uint32, conn net.Conn, data []byte) {
 		entries = entries[:req.Maxresults]
 	}
 
+	hideWebsearch := len(req.Providers) > 1 && len(entries) > MaxGlobalItemsToDisplayWebsearch
+
 	for _, v := range entries {
+		if v.Provider == "websearch" && hideWebsearch && v.Text != wsprefix {
+			continue
+		}
+
 		if req.Query != "" && currentIteration != queries[cid][currentQID].Iteration.Load() {
 			slog.Info("providers", "results", "aborting", "qid", currentQID, "iid", currentIteration)
 			return

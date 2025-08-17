@@ -13,6 +13,7 @@ pre_cmd = [
   "cd internal/providers/calc && go build -buildmode=plugin && cp calc.so /home/andrej/.config/elephant/providers/",
   "cd internal/providers/providerlist && go build -buildmode=plugin && cp providerlist.so /home/andrej/.config/elephant/providers/",
   "cd internal/providers/menus && go build -buildmode=plugin && cp menus.so /home/andrej/.config/elephant/providers/",
+  "cd internal/providers/websearch && go build -buildmode=plugin && cp websearch.so /home/andrej/.config/elephant/providers/",
 ]
 # Binary file yields from `cmd`.
 bin = "/tmp/elephant-air"

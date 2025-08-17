@@ -129,6 +129,16 @@ jobs:
         echo "Building menus plugin for linux/arm64..."
         GOOS=linux GOARCH=arm64 CGO_ENABLED=1 CC=aarch64-linux-gnu-gcc go build -buildmode=plugin -o build/menus-linux-arm64.so ./internal/providers/menus
 
+    - name: Build websearch plugin for linux/amd64
+      run: |
+        echo "Building websearch plugin for linux/amd64..."
+        GOOS=linux GOARCH=amd64 CGO_ENABLED=1 go build -buildmode=plugin -o build/websearch-linux-amd64.so ./internal/providers/websearch
+
+    - name: Build websearch plugin for linux/arm64
+      run: |
+        echo "Building websearch plugin for linux/arm64..."
+        GOOS=linux GOARCH=arm64 CGO_ENABLED=1 CC=aarch64-linux-gnu-gcc go build -buildmode=plugin -o build/websearch-linux-arm64.so ./internal/providers/websearch
+
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
@@ -196,6 +206,10 @@ jobs:
         # Archive menus plugin
         tar -czf menus-linux-amd64.tar.gz menus-linux-amd64.so
         tar -czf menus-linux-arm64.tar.gz menus-linux-arm64.so
+
+        # Archive websearch plugin
+        tar -czf websearch-linux-amd64.tar.gz websearch-linux-amd64.so
+        tar -czf websearch-linux-arm64.tar.gz websearch-linux-arm64.so
 
         echo "Build completed successfully!"
         echo "Created archives:"
