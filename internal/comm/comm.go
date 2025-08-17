@@ -13,7 +13,10 @@ import (
 )
 
 // connection id
-var cid uint32
+var (
+	cid    uint32
+	Socket = filepath.Join(os.TempDir(), "elephant.sock")
+)
 
 var registry []MessageHandler
 
@@ -38,11 +41,10 @@ func init() {
 }
 
 func StartListen() {
-	file := filepath.Join(os.TempDir(), "elephant.sock")
-	os.Remove(file)
+	os.Remove(Socket)
 
 	l, err := net.ListenUnix("unix", &net.UnixAddr{
-		Name: file,
+		Name: Socket,
 	})
 	if err != nil {
 		slog.Error("comm", "socket", err)

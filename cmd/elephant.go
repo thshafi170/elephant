@@ -7,7 +7,9 @@ import (
 	"log"
 	"log/slog"
 	"os"
+	"os/signal"
 	"path/filepath"
+	"syscall"
 	"time"
 
 	"github.com/abenz1267/elephant/internal/comm"
@@ -25,6 +27,19 @@ var version string
 func main() {
 	var config string
 	var debug bool
+
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan,
+		syscall.SIGHUP,
+		syscall.SIGINT,
+		syscall.SIGTERM,
+		syscall.SIGQUIT, syscall.SIGUSR1)
+
+	go func() {
+		<-signalChan
+		os.Remove(comm.Socket)
+		os.Exit(0)
+	}()
 
 	cmd := &cli.Command{
 		Name:                   "Elephant",
