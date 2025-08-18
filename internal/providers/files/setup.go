@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"fmt"
 	"io/fs"
+	"log"
 	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/abenz1267/elephant/internal/common"
@@ -16,12 +18,20 @@ import (
 	"github.com/abenz1267/elephant/internal/util"
 	"github.com/adrg/xdg"
 	"github.com/charlievieth/fastwalk"
+	"github.com/djherbis/times"
+	"github.com/fsnotify/fsnotify"
 )
 
 var (
-	paths   []string
+	pm      sync.Mutex
+	paths   = make(map[string]time.Time)
 	results = providers.QueryData{}
 )
+
+type file struct {
+	path    string
+	changed time.Time
+}
 
 var terminalApps = make(map[string]struct{})
 
@@ -51,7 +61,6 @@ func init() {
 
 	findTerminalApps()
 
-	paths = []string{}
 	home, _ := os.UserHomeDir()
 	cmd := exec.Command("fd", ".", home, "--ignore-vcs", "--type", "file", "--type", "directory")
 
@@ -61,9 +70,67 @@ func init() {
 		os.Exit(1)
 	}
 
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	go func() {
+		for {
+			select {
+			case event, ok := <-watcher.Events:
+				if !ok {
+					return
+				}
+
+				if event.Op == fsnotify.Remove || event.Op == fsnotify.Rename {
+					pm.Lock()
+					// this is ghetto, but paths aren't suffixed with `/`, so we can't just check for a path-prefix
+					for k := range paths {
+						if _, err := os.Stat(k); err != nil {
+							delete(paths, k)
+						}
+					}
+					pm.Unlock()
+				}
+
+				if info, err := times.Stat(event.Name); err == nil {
+					pm.Lock()
+
+					fileInfo, err := os.Stat(event.Name)
+					if err == nil {
+						path := event.Name
+
+						if fileInfo.IsDir() {
+							path = path + "/"
+							watcher.Add(path)
+						}
+						paths[path] = info.ChangeTime()
+					}
+
+					pm.Unlock()
+				}
+			case _, ok := <-watcher.Errors:
+				if !ok {
+					return
+				}
+			}
+		}
+	}()
+
 	for v := range bytes.Lines(out) {
 		if len(v) > 0 {
-			paths = append(paths, strings.TrimSpace(string(v)))
+			path := strings.TrimSpace(string(v))
+
+			if strings.HasSuffix(path, "/") {
+				watcher.Add(path)
+			}
+
+			if info, err := times.Stat(path); err == nil {
+				pm.Lock()
+				paths[path] = info.ChangeTime()
+				pm.Unlock()
+			}
 		}
 	}
 

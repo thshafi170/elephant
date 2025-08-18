@@ -29,12 +29,12 @@ func Activate(qid uint32, identifier, action string, arguments string) {
 		action = ActionOpen
 	}
 
-	for k, v := range paths {
-		md5 := md5.Sum([]byte(v))
+	for k := range paths {
+		md5 := md5.Sum([]byte(k))
 		md5str := hex.EncodeToString(md5[:])
 
 		if identifier == md5str {
-			path = paths[k]
+			path = k
 			break
 		}
 	}

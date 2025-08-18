@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/abenz1267/elephant/internal/common"
@@ -18,15 +19,13 @@ func Query(qid uint32, iid uint32, query string, _ bool, exact bool) []*pb.Query
 		results.GetData(query, qid, iid, exact)
 	}
 
-	for _, v := range paths {
-		common.FuzzyScore(query, v, exact)
-
-		md5 := md5.Sum([]byte(v))
+	for k, v := range paths {
+		md5 := md5.Sum([]byte(k))
 		md5str := hex.EncodeToString(md5[:])
 
 		e := &pb.QueryResponse_Item{
 			Identifier: md5str,
-			Text:       v,
+			Text:       k,
 			Type:       pb.QueryResponse_REGULAR,
 			Subtext:    "",
 			Provider:   Name,
@@ -40,6 +39,10 @@ func Query(qid uint32, iid uint32, query string, _ bool, exact bool) []*pb.Query
 			e.Score, e.Fuzzyinfo.Positions, e.Fuzzyinfo.Start = common.FuzzyScore(query, e.Text, exact)
 		}
 
+		if !strings.HasSuffix(k, "/") && query == "" {
+			e.Score = e.Score + calcScore(v, start)
+		}
+
 		if e.Score > 0 || query == "" {
 			entries = append(entries, e)
 		}
@@ -47,4 +50,16 @@ func Query(qid uint32, iid uint32, query string, _ bool, exact bool) []*pb.Query
 
 	slog.Info(Name, "queryresult", len(entries), "time", time.Since(start))
 	return entries
+}
+
+func calcScore(v time.Time, now time.Time) int32 {
+	diff := now.Sub(v)
+
+	res := 3600 - diff.Seconds()
+
+	if res < 0 {
+		res = 0
+	}
+
+	return int32(res)
 }

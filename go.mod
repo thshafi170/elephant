@@ -9,6 +9,7 @@ require (
 )
 
 require (
+	github.com/djherbis/times v1.6.0 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.3.0 // indirect
 	github.com/knadh/koanf/maps v0.1.2 // indirect
