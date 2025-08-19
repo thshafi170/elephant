@@ -1,8 +1,6 @@
 package main
 
 import (
-	"crypto/md5"
-	"encoding/hex"
 	"log/slog"
 	"strings"
 	"time"
@@ -13,38 +11,53 @@ import (
 
 func Query(qid uint32, iid uint32, query string, _ bool, exact bool) []*pb.QueryResponse_Item {
 	start := time.Now()
-	entries := []*pb.QueryResponse_Item{}
+
+	initialCap := len(paths)
 
 	if query != "" {
+		initialCap = min(initialCap/10, 1000)
 		results.GetData(query, qid, iid, exact)
 	}
 
-	for k, v := range paths {
-		md5 := md5.Sum([]byte(k))
-		md5str := hex.EncodeToString(md5[:])
+	entries := make([]*pb.QueryResponse_Item, 0, initialCap)
 
-		e := &pb.QueryResponse_Item{
-			Identifier: md5str,
-			Text:       k,
-			Type:       pb.QueryResponse_REGULAR,
-			Subtext:    "",
-			Provider:   Name,
-		}
-
-		if query != "" {
-			e.Fuzzyinfo = &pb.QueryResponse_Item_FuzzyInfo{
-				Field: "text",
+	if query != "" {
+		for k, v := range paths {
+			score, positions, s := common.FuzzyScore(query, v.path, exact)
+			if score > 0 {
+				entries = append(entries, &pb.QueryResponse_Item{
+					Identifier: k,
+					Text:       v.path,
+					Type:       pb.QueryResponse_REGULAR,
+					Subtext:    "",
+					Provider:   Name,
+					Score:      score,
+					Fuzzyinfo: &pb.QueryResponse_Item_FuzzyInfo{
+						Start:     s,
+						Field:     "text",
+						Positions: positions,
+					},
+				})
 			}
-
-			e.Score, e.Fuzzyinfo.Positions, e.Fuzzyinfo.Start = common.FuzzyScore(query, e.Text, exact)
 		}
-
-		if !strings.HasSuffix(k, "/") && query == "" {
-			e.Score = e.Score + calcScore(v, start)
-		}
-
-		if e.Score > 0 || query == "" {
-			entries = append(entries, e)
+	} else {
+		for k, v := range paths {
+			if !strings.HasSuffix(k, "/") {
+				score := calcScore(v.changed, start)
+				entries = append(entries, &pb.QueryResponse_Item{
+					Identifier: k,
+					Text:       v.path,
+					Type:       pb.QueryResponse_REGULAR,
+					Subtext:    "",
+					Provider:   Name,
+					Score:      score,
+					Fuzzyinfo: &pb.QueryResponse_Item_FuzzyInfo{
+						Start:     0,
+						Field:     "text",
+						Positions: nil,
+					},
+				})
+			}
 		}
 	}
 
@@ -53,6 +66,10 @@ func Query(qid uint32, iid uint32, query string, _ bool, exact bool) []*pb.Query
 }
 
 func calcScore(v time.Time, now time.Time) int32 {
+	if v.IsZero() {
+		return 0
+	}
+
 	diff := now.Sub(v)
 
 	res := 3600 - diff.Seconds()

@@ -75,11 +75,22 @@ func (h *History) FindUsage(query, identifier string) (int, time.Time) {
 	var usage int
 	var lastUsed time.Time
 
-	for k, v := range h.Data {
-		if strings.HasPrefix(query, k) || query == "" {
+	if query == "" {
+		for _, v := range h.Data {
 			if n, ok := v[identifier]; ok {
-				usage = usage + n.Amount
+				usage += n.Amount
+				if n.LastUsed.After(lastUsed) {
+					lastUsed = n.LastUsed
+				}
+			}
+		}
+		return usage, lastUsed
+	}
 
+	for k, v := range h.Data {
+		if strings.HasPrefix(query, k) {
+			if n, ok := v[identifier]; ok {
+				usage += n.Amount
 				if n.LastUsed.After(lastUsed) {
 					lastUsed = n.LastUsed
 				}

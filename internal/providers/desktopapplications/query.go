@@ -18,7 +18,7 @@ var results = providers.QueryData{}
 func Query(qid uint32, iid uint32, query string, _ bool, exact bool) []*pb.QueryResponse_Item {
 	start := time.Now()
 	desktop := os.Getenv("XDG_CURRENT_DESKTOP")
-	entries := []*pb.QueryResponse_Item{}
+	entries := make([]*pb.QueryResponse_Item, 0, len(files)*2) // Estimate for entries + action
 
 	isSub := qid >= 100_000_000
 
@@ -37,91 +37,126 @@ func Query(qid uint32, iid uint32, query string, _ bool, exact bool) []*pb.Query
 		}
 
 		// check generic
-		e := &pb.QueryResponse_Item{
-			Identifier: k,
-			Text:       v.Name,
-			Type:       pb.QueryResponse_REGULAR,
-			Subtext:    v.GenericName,
-			Icon:       v.Icon,
-			Provider:   Name,
-		}
+		// e := &pb.QueryResponse_Item{
+		// 	Identifier: k,
+		// 	Text:       v.Name,
+		// 	Type:       pb.QueryResponse_REGULAR,
+		// 	Subtext:    v.GenericName,
+		// 	Icon:       v.Icon,
+		// 	Provider:   Name,
+		// }
 
-		if e.Identifier == alias {
-			e.Score = 1_000_000
-			entries = append(entries, e)
+		if k == alias {
+			entries = append(entries, &pb.QueryResponse_Item{
+				Identifier: k,
+				Text:       v.Name,
+				Type:       pb.QueryResponse_REGULAR,
+				Subtext:    v.GenericName,
+				Icon:       v.Icon,
+				Provider:   Name,
+				Score:      1_000_000,
+			})
 			continue
 		}
 
 		var match string
 		var ok bool
+		var score int32
+		var positions []int32
+		var fs int32
+		field := "text"
+		subtext := v.GenericName
 
 		if query != "" {
-			e.Fuzzyinfo = &pb.QueryResponse_Item_FuzzyInfo{
-				Field: "text",
-			}
+			match, score, positions, fs, ok = calcScore(query, &v.Data, exact)
 
-			match, e.Score, e.Fuzzyinfo.Positions, e.Fuzzyinfo.Start, ok = calcScore(query, &v.Data, exact)
-
-			if ok && match != e.Text {
-				e.Subtext = match
-				e.Fuzzyinfo.Field = "subtext"
+			if ok && match != v.Name {
+				subtext = match
+				field = "subtext"
 			}
 		}
 
 		var usageScore int32
-		if config.History && (e.Score > 0 || query == "") {
-			usageScore = h.CalcUsageScore(query, e.Identifier)
-			e.Score = e.Score + usageScore
+		if config.History && (score > 0 || query == "") {
+			usageScore = h.CalcUsageScore(query, k)
+			score = score + usageScore
 		}
 
 		if usageScore != 0 || config.ShowActions && config.ShowGeneric || !config.ShowActions || (config.ShowActions && len(v.Actions) == 0) || query == "" {
-			if e.Score >= config.MinScore || query == "" {
-				entries = append(entries, e)
+			if score >= config.MinScore || query == "" {
+				entries = append(entries, &pb.QueryResponse_Item{
+					Identifier: k,
+					Text:       v.Name,
+					Type:       pb.QueryResponse_REGULAR,
+					Subtext:    subtext,
+					Icon:       v.Icon,
+					Provider:   Name,
+					Score:      score,
+					Fuzzyinfo: &pb.QueryResponse_Item_FuzzyInfo{
+						Start:     fs,
+						Field:     field,
+						Positions: positions,
+					},
+				})
 			}
 		}
 
 		// check actions
 		for _, a := range v.Actions {
-			e := &pb.QueryResponse_Item{
-				Identifier: fmt.Sprintf("%s:%s", k, a.Action),
-				Text:       a.Name,
-				Type:       pb.QueryResponse_REGULAR,
-				Subtext:    v.Name,
-				Icon:       a.Icon,
-				Provider:   Name,
-			}
+			identifier := fmt.Sprintf("%s:%s", k, a.Action)
 
-			if e.Identifier == alias {
-				e.Score = 1_000_000
-				entries = append(entries, e)
+			if identifier == alias {
+				entries = append(entries, &pb.QueryResponse_Item{
+					Identifier: identifier,
+					Score:      1_000_000,
+					Text:       a.Name,
+					Type:       pb.QueryResponse_REGULAR,
+					Subtext:    v.Name,
+					Icon:       a.Icon,
+					Provider:   Name,
+				})
 				continue
 			}
 
 			var match string
 			var ok bool
+			var score int32
+			var positions []int32
+			var fs int32
+			field := "text"
+			subtext := v.Name
 
 			if query != "" {
-				e.Fuzzyinfo = &pb.QueryResponse_Item_FuzzyInfo{
-					Field: "text",
-				}
+				match, score, positions, fs, ok = calcScore(query, &a, exact)
 
-				match, e.Score, e.Fuzzyinfo.Positions, e.Fuzzyinfo.Start, ok = calcScore(query, &a, exact)
-
-				if ok && match != e.Text {
-					e.Subtext = match
-					e.Fuzzyinfo.Field = "subtext"
+				if ok && match != a.Name {
+					subtext = match
+					field = "subtext"
 				}
 			}
 
 			var usageScore int32
-			if config.History && (e.Score > 0 || query == "") {
-				usageScore = h.CalcUsageScore(query, e.Identifier)
-				e.Score = e.Score + usageScore
+			if config.History && (score > 0 || query == "") {
+				usageScore = h.CalcUsageScore(query, identifier)
+				score = score + usageScore
 			}
 
 			if (query == "" && config.ShowActionsWithoutQuery) || (query != "" && config.ShowActions) || usageScore != 0 {
-				if e.Score >= config.MinScore || query == "" {
-					entries = append(entries, e)
+				if score >= config.MinScore || query == "" {
+					entries = append(entries, &pb.QueryResponse_Item{
+						Identifier: identifier,
+						Score:      score,
+						Text:       a.Name,
+						Type:       pb.QueryResponse_REGULAR,
+						Subtext:    subtext,
+						Icon:       a.Icon,
+						Provider:   Name,
+						Fuzzyinfo: &pb.QueryResponse_Item_FuzzyInfo{
+							Start:     fs,
+							Field:     field,
+							Positions: positions,
+						},
+					})
 				}
 			}
 		}

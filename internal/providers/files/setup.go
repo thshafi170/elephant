@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"io/fs"
 	"log"
@@ -24,13 +26,14 @@ import (
 
 var (
 	pm      sync.Mutex
-	paths   = make(map[string]time.Time)
+	paths   = make(map[string]*file)
 	results = providers.QueryData{}
 )
 
 type file struct {
-	path    string
-	changed time.Time
+	identifier string
+	path       string
+	changed    time.Time
 }
 
 var terminalApps = make(map[string]struct{})
@@ -86,8 +89,8 @@ func init() {
 				if event.Op == fsnotify.Remove || event.Op == fsnotify.Rename {
 					pm.Lock()
 					// this is ghetto, but paths aren't suffixed with `/`, so we can't just check for a path-prefix
-					for k := range paths {
-						if _, err := os.Stat(k); err != nil {
+					for k, v := range paths {
+						if _, err := os.Stat(v.path); err != nil {
 							delete(paths, k)
 						}
 					}
@@ -105,7 +108,19 @@ func init() {
 							path = path + "/"
 							watcher.Add(path)
 						}
-						paths[path] = info.ChangeTime()
+
+						md5 := md5.Sum([]byte(path))
+						md5str := hex.EncodeToString(md5[:])
+
+						if val, ok := paths[md5str]; ok {
+							val.changed = info.ChangeTime()
+						} else {
+							paths[md5str] = &file{
+								identifier: md5str,
+								path:       path,
+								changed:    info.ChangeTime(),
+							}
+						}
 					}
 
 					pm.Unlock()
@@ -128,7 +143,25 @@ func init() {
 
 			if info, err := times.Stat(path); err == nil {
 				pm.Lock()
-				paths[path] = info.ChangeTime()
+
+				diff := start.Sub(info.ChangeTime())
+
+				md5 := md5.Sum([]byte(path))
+				md5str := hex.EncodeToString(md5[:])
+
+				f := file{
+					identifier: md5str,
+					path:       path,
+					changed:    time.Time{},
+				}
+
+				res := 3600 - diff.Seconds()
+				if res > 0 {
+					f.changed = info.ChangeTime()
+				}
+
+				paths[md5str] = &f
+
 				pm.Unlock()
 			}
 		}

@@ -117,20 +117,13 @@ func Query(qid uint32, iid uint32, query string, _ bool, exact bool) []*pb.Query
 	}
 
 	for k, v := range symbols {
-		e := &pb.QueryResponse_Item{
-			Identifier: k,
-			Text:       v.CP,
-			Icon:       v.CP,
-			Provider:   Name,
-			Fuzzyinfo:  &pb.QueryResponse_Item_FuzzyInfo{},
-			Type:       pb.QueryResponse_REGULAR,
-		}
+		field := "subtext"
+		var positions []int32
+		var fs int32
+		var score int32
+		var subtext string
 
 		if query != "" {
-			e.Fuzzyinfo = &pb.QueryResponse_Item_FuzzyInfo{
-				Field: "subtext",
-			}
-
 			var bestText string
 			var bestScore int32
 			var bestPos []int32
@@ -147,22 +140,35 @@ func Query(qid uint32, iid uint32, query string, _ bool, exact bool) []*pb.Query
 				}
 			}
 
-			e.Fuzzyinfo.Positions = bestPos
-			e.Fuzzyinfo.Start = bestStart
-			e.Score = bestScore
-			e.Subtext = bestText
+			positions = bestPos
+			fs = bestStart
+			score = bestScore
+			subtext = bestText
 		} else {
-			e.Subtext = v.Searchable[len(v.Searchable)-1]
+			subtext = v.Searchable[len(v.Searchable)-1]
 		}
 
 		var usageScore int32
-		if config.History && (e.Score > 0 || query == "") {
-			usageScore = h.CalcUsageScore(query, e.Identifier)
-			e.Score = e.Score + usageScore
+		if config.History && (score > 0 || query == "") {
+			usageScore = h.CalcUsageScore(query, k)
+			score = score + usageScore
 		}
 
-		if usageScore != 0 || e.Score > 0 || query == "" {
-			entries = append(entries, e)
+		if usageScore != 0 || score > 0 || query == "" {
+			entries = append(entries, &pb.QueryResponse_Item{
+				Identifier: k,
+				Subtext:    subtext,
+				Score:      score,
+				Text:       v.CP,
+				Icon:       v.CP,
+				Provider:   Name,
+				Fuzzyinfo: &pb.QueryResponse_Item_FuzzyInfo{
+					Start:     fs,
+					Field:     field,
+					Positions: positions,
+				},
+				Type: pb.QueryResponse_REGULAR,
+			})
 		}
 	}
 
