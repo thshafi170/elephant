@@ -32,11 +32,13 @@ func FuzzyScore(input, target string, exact bool) (int32, []int32, int32) {
 		int32Slice = make([]int32, len(intSlice))
 
 		for i, v := range intSlice {
-			int32Slice[i] = int32(v) // Explicit conversion
+			int32Slice[i] = int32(v)
 		}
 	} else {
 		int32Slice = make([]int32, 0)
 	}
+
+	res.Score = res.Score - res.Start
 
 	return int32(res.Score), int32Slice, int32(res.Start)
 }
