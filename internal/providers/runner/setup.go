@@ -224,7 +224,7 @@ func Query(qid uint32, iid uint32, query string, _ bool, exact bool) []*pb.Query
 			e.Score = e.Score + usageScore
 		}
 
-		if e.Score > 0 || query == "" {
+		if e.Score > config.MinScore || query == "" {
 			entries = append(entries, e)
 		}
 	}

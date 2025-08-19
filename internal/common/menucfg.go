@@ -49,28 +49,30 @@ func (e Entry) CreateIdentifier() string {
 }
 
 var (
-	menuConfigLoaded MenuConfig
+	MenuConfigLoaded MenuConfig
 	menuname         = "menus"
 	Menus            = make(map[string]Menu)
 )
 
 func LoadMenus() {
-	menuConfigLoaded = MenuConfig{
-		Config: Config{},
-		Paths:  []string{},
+	MenuConfigLoaded = MenuConfig{
+		Config: Config{
+			MinScore: 50,
+		},
+		Paths: []string{},
 	}
 
-	LoadConfig(menuname, menuConfigLoaded)
+	LoadConfig(menuname, MenuConfigLoaded)
 
 	path := filepath.Join(ConfigDir(), "menus")
 
-	menuConfigLoaded.Paths = append(menuConfigLoaded.Paths, path)
+	MenuConfigLoaded.Paths = append(MenuConfigLoaded.Paths, path)
 
 	conf := fastwalk.Config{
 		Follow: true,
 	}
 
-	for _, root := range menuConfigLoaded.Paths {
+	for _, root := range MenuConfigLoaded.Paths {
 		if _, err := os.Stat(root); err != nil {
 			continue
 		}

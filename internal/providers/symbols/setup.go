@@ -154,7 +154,7 @@ func Query(qid uint32, iid uint32, query string, _ bool, exact bool) []*pb.Query
 			score = score + usageScore
 		}
 
-		if usageScore != 0 || score > 0 || query == "" {
+		if usageScore != 0 || score > config.MinScore || query == "" {
 			entries = append(entries, &pb.QueryResponse_Item{
 				Identifier: k,
 				Subtext:    subtext,

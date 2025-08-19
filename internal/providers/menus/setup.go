@@ -173,7 +173,7 @@ func Query(qid uint32, iid uint32, query string, _ bool, exact bool) []*pb.Query
 				e.Score, e.Fuzzyinfo.Positions, e.Fuzzyinfo.Start = common.FuzzyScore(query, e.Text, exact)
 			}
 
-			if e.Score > 0 || query == "" {
+			if e.Score > common.MenuConfigLoaded.MinScore || query == "" {
 				entries = append(entries, e)
 			}
 		}

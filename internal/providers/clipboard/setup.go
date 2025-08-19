@@ -313,9 +313,12 @@ func Query(qid uint32, iid uint32, text string, _ bool, exact bool) []*pb.QueryR
 				Start:     start,
 			}
 
+			if e.Score > config.MinScore {
+				entries = append(entries, e)
+			}
+		} else {
+			entries = append(entries, e)
 		}
-
-		entries = append(entries, e)
 	}
 
 	if text == "" {

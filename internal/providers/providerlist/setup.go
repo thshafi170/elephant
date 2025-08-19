@@ -15,7 +15,23 @@ import (
 var (
 	Name       = "providerlist"
 	NamePretty = "Providerlist"
+	config     *Config
 )
+
+type Config struct {
+	common.Config `koanf:",squash"`
+}
+
+func init() {
+	config = &Config{
+		Config: common.Config{
+			Icon:     "applications-other",
+			MinScore: 10,
+		},
+	}
+
+	common.LoadConfig(Name, config)
+}
 
 func PrintDoc() {
 	fmt.Printf("### %s\n", NamePretty)
@@ -61,7 +77,7 @@ func Query(qid uint32, iid uint32, query string, single bool, exact bool) []*pb.
 					e.Score, e.Fuzzyinfo.Positions, e.Fuzzyinfo.Start = common.FuzzyScore(query, e.Text, exact)
 				}
 
-				if e.Score > 0 || query == "" {
+				if e.Score > config.MinScore || query == "" {
 					entries = append(entries, e)
 				}
 			}
@@ -82,7 +98,7 @@ func Query(qid uint32, iid uint32, query string, single bool, exact bool) []*pb.
 				e.Score, e.Fuzzyinfo.Positions, e.Fuzzyinfo.Start = common.FuzzyScore(query, e.Text, exact)
 			}
 
-			if e.Score > 0 || query == "" {
+			if e.Score > config.MinScore || query == "" {
 				entries = append(entries, e)
 			}
 		}
