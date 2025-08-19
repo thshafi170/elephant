@@ -134,7 +134,12 @@ const (
 func Activate(qid uint32, identifier, action string, arguments string) {
 	bin := ""
 
-	arguments = strings.Join(strings.Fields(arguments)[1:], " ")
+	splits := strings.Split(arguments, common.GetElephantConfig().ArgumentDelimiter)
+	if len(splits) > 1 {
+		arguments = splits[1]
+	} else {
+		arguments = ""
+	}
 
 	for _, v := range items {
 		if v.Identifier == identifier {
