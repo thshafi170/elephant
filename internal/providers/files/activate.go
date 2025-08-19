@@ -1,8 +1,6 @@
 package main
 
 import (
-	"crypto/md5"
-	"encoding/hex"
 	"fmt"
 	"log"
 	"log/slog"
@@ -23,20 +21,10 @@ const (
 )
 
 func Activate(qid uint32, identifier, action string, arguments string) {
-	path := ""
+	path := paths[identifier].path
 
 	if action == "" {
 		action = ActionOpen
-	}
-
-	for k := range paths {
-		md5 := md5.Sum([]byte(k))
-		md5str := hex.EncodeToString(md5[:])
-
-		if identifier == md5str {
-			path = k
-			break
-		}
 	}
 
 	switch action {
