@@ -292,15 +292,10 @@ func Query(qid uint32, iid uint32, text string, _ bool, exact bool) []*pb.QueryR
 		e := &pb.QueryResponse_Item{
 			Identifier: k,
 			Text:       v.Content,
+			Icon:       v.Img,
 			Subtext:    v.Time.Format(time.RFC1123Z),
 			Type:       pb.QueryResponse_REGULAR,
 			Provider:   Name,
-		}
-
-		if v.Img != "" {
-			e.Text = v.Img
-			e.Type = pb.QueryResponse_FILE
-			e.Mimetype = v.Mimetype
 		}
 
 		if text != "" {
