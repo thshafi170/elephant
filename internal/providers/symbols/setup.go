@@ -121,7 +121,7 @@ func Query(qid uint32, iid uint32, query string, _ bool, exact bool) []*pb.Query
 		var positions []int32
 		var fs int32
 		var score int32
-		var subtext string
+		var text string
 
 		if query != "" {
 			var bestText string
@@ -143,9 +143,9 @@ func Query(qid uint32, iid uint32, query string, _ bool, exact bool) []*pb.Query
 			positions = bestPos
 			fs = bestStart
 			score = bestScore
-			subtext = bestText
+			text = bestText
 		} else {
-			subtext = v.Searchable[len(v.Searchable)-1]
+			text = v.Searchable[len(v.Searchable)-1]
 		}
 
 		var usageScore int32
@@ -157,9 +157,8 @@ func Query(qid uint32, iid uint32, query string, _ bool, exact bool) []*pb.Query
 		if usageScore != 0 || score > config.MinScore || query == "" {
 			entries = append(entries, &pb.QueryResponse_Item{
 				Identifier: k,
-				Subtext:    subtext,
 				Score:      score,
-				Text:       v.CP,
+				Text:       text,
 				Icon:       v.CP,
 				Provider:   Name,
 				Fuzzyinfo: &pb.QueryResponse_Item_FuzzyInfo{
