@@ -37,15 +37,6 @@ func Query(qid uint32, iid uint32, query string, _ bool, exact bool) []*pb.Query
 		}
 
 		// check generic
-		// e := &pb.QueryResponse_Item{
-		// 	Identifier: k,
-		// 	Text:       v.Name,
-		// 	Type:       pb.QueryResponse_REGULAR,
-		// 	Subtext:    v.GenericName,
-		// 	Icon:       v.Icon,
-		// 	Provider:   Name,
-		// }
-
 		if k == alias {
 			entries = append(entries, &pb.QueryResponse_Item{
 				Identifier: k,
@@ -192,7 +183,7 @@ func calcScore(q string, d *Data, exact bool) (string, int32, []int32, int32, bo
 		return "", 0, nil, 0, false
 	}
 
-	scoreRes = max(scoreRes-min(modifier*10, 50)-startRes, 10)
+	scoreRes = max(scoreRes-min(modifier*5, 50)-startRes, 10)
 
 	return match, scoreRes, posRes, startRes, true
 }
