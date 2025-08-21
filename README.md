@@ -46,6 +46,9 @@ Elephant acts as a unified backend service that aggregates data from various sou
 - **📊 Provider List**
   - Dynamic listing of all loaded providers and menus
 
+- **🌐 Websearch**
+  - ... define custom search engines
+
 ## Installation
 
 ### Prerequisites
@@ -244,4 +247,3 @@ This project is licensed under the GNU General Public License v3.0. See [LICENSE
 
 - 💬 [Discord Community](https://discord.gg/mGQWBQHASt)
 - 🐛 [Issue Tracker](https://github.com/abenz1267/elephant/issues)
-
