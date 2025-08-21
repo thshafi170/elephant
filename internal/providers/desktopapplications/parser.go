@@ -9,6 +9,8 @@ import (
 	"slices"
 	"strings"
 	"unicode"
+
+	"github.com/abenz1267/elephant/internal/common"
 )
 
 type Data struct {
@@ -150,7 +152,7 @@ func parseData(in []byte, l, ll string) Data {
 			res.NotShowIn = strings.Split(string(bytes.TrimPrefix(line, []byte("NotShowIn="))), ";")
 
 		case bytes.HasPrefix(line, []byte("Exec=")):
-			if config.LaunchPrefix == "CLEAR" {
+			if common.LaunchPrefix(config.LaunchPrefix) == "" {
 				exec, err := parseExec(string(bytes.TrimPrefix(line, []byte("Exec="))))
 				if err != nil {
 					slog.Error(Name, "parsing", err)
