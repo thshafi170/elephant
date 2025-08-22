@@ -148,6 +148,7 @@ func Query(qid uint32, iid uint32, query string, _ bool, exact bool) []*pb.Query
 				Provider:   fmt.Sprintf("%s:%s", Name, v.Menu),
 				Icon:       icon,
 				Type:       pb.QueryResponse_REGULAR,
+				Preview:    v.Preview,
 			}
 
 			if v.Async != "" {
