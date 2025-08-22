@@ -66,7 +66,13 @@ func main() {
 					providers.Load()
 
 					for _, v := range providers.Providers {
-						fmt.Printf("%s:%s\n", *v.NamePretty, *v.Name)
+						if *v.Name == "menus" {
+							for _, m := range common.Menus {
+								fmt.Printf("%s;menus:%s\n", m.NamePretty, m.Name)
+							}
+						} else {
+							fmt.Printf("%s;%s\n", *v.NamePretty, *v.Name)
+						}
 					}
 
 					return nil
