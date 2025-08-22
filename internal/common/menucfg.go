@@ -57,7 +57,7 @@ var (
 func LoadMenus() {
 	MenuConfigLoaded = MenuConfig{
 		Config: Config{
-			MinScore: 50,
+			MinScore: 10,
 		},
 		Paths: []string{},
 	}

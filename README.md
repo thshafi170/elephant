@@ -46,14 +46,22 @@ Elephant acts as a unified backend service that aggregates data from various sou
 - **📊 Provider List**
   - Dynamic listing of all loaded providers and menus
 
+- **🌐 Websearch**
+  - ... define custom search engines
+
 ## Installation
 
-### Prerequisites
+### Installing on Arch
 
-- Go 1.24.5 or later
-- Unix-like operating system (Linux, macOS)
+```
+yay -S elephant
 
-### Quick Installation
+# Providers, f.e.
+
+yay -S elephant-desktopapplications
+```
+
+### Building from Source
 
 ```bash
 # Clone the repository
@@ -71,27 +79,6 @@ mkdir -p ~/.config/elephant/providers
 cd ../internal/providers/desktopapplications
 go build -buildmode=plugin
 cp desktopapplications.so ~/.config/elephant/providers/
-```
-
-### Building Other Providers
-
-Each provider can be built as a plugin:
-
-```bash
-# Files provider
-cd internal/providers/files
-go build -buildmode=plugin
-cp files.so ~/.config/elephant/providers/
-
-# Clipboard provider
-cd internal/providers/clipboard
-go build -buildmode=plugin
-cp clipboard.so ~/.config/elephant/providers/
-
-# Calculator provider
-cd internal/providers/calc
-go build -buildmode=plugin
-cp calc.so ~/.config/elephant/providers/
 ```
 
 ## Usage
@@ -244,4 +231,3 @@ This project is licensed under the GNU General Public License v3.0. See [LICENSE
 
 - 💬 [Discord Community](https://discord.gg/mGQWBQHASt)
 - 🐛 [Issue Tracker](https://github.com/abenz1267/elephant/issues)
-

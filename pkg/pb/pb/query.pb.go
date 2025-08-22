@@ -7,11 +7,12 @@
 package pb
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -206,6 +207,7 @@ type QueryResponse_Item struct {
 	Fuzzyinfo     *QueryResponse_Item_FuzzyInfo `protobuf:"bytes,7,opt,name=fuzzyinfo,proto3" json:"fuzzyinfo,omitempty"`
 	Type          QueryResponse_Type            `protobuf:"varint,8,opt,name=type,proto3,enum=pb.QueryResponse_Type" json:"type,omitempty"`
 	Mimetype      string                        `protobuf:"bytes,9,opt,name=mimetype,proto3" json:"mimetype,omitempty"`
+	Preview       string                        `protobuf:"bytes,10,opt,name=preview,proto3" json:"preview,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -303,6 +305,13 @@ func (x *QueryResponse_Item) GetMimetype() string {
 	return ""
 }
 
+func (x *QueryResponse_Item) GetPreview() string {
+	if x != nil {
+		return x.Preview
+	}
+	return ""
+}
+
 type QueryResponse_Item_FuzzyInfo struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Start         int32                  `protobuf:"varint,1,opt,name=start,proto3" json:"start,omitempty"`
@@ -374,11 +383,11 @@ const file_query_proto_rawDesc = "" +
 	"\n" +
 	"maxresults\x18\x03 \x01(\x05R\n" +
 	"maxresults\x12 \n" +
-	"\vexactsearch\x18\x04 \x01(\bR\vexactsearch\"\xfa\x03\n" +
+	"\vexactsearch\x18\x04 \x01(\bR\vexactsearch\"\x94\x04\n" +
 	"\rQueryResponse\x12\x10\n" +
 	"\x03qid\x18\x01 \x01(\x05R\x03qid\x12\x10\n" +
 	"\x03iid\x18\x02 \x01(\x05R\x03iid\x12*\n" +
-	"\x04item\x18\x03 \x01(\v2\x16.pb.QueryResponse.ItemR\x04item\x1a\xf9\x02\n" +
+	"\x04item\x18\x03 \x01(\v2\x16.pb.QueryResponse.ItemR\x04item\x1a\x93\x03\n" +
 	"\x04Item\x12\x1e\n" +
 	"\n" +
 	"identifier\x18\x01 \x01(\tR\n" +
@@ -390,7 +399,9 @@ const file_query_proto_rawDesc = "" +
 	"\x05score\x18\x06 \x01(\x05R\x05score\x12>\n" +
 	"\tfuzzyinfo\x18\a \x01(\v2 .pb.QueryResponse.Item.FuzzyInfoR\tfuzzyinfo\x12*\n" +
 	"\x04type\x18\b \x01(\x0e2\x16.pb.QueryResponse.TypeR\x04type\x12\x1a\n" +
-	"\bmimetype\x18\t \x01(\tR\bmimetype\x1aU\n" +
+	"\bmimetype\x18\t \x01(\tR\bmimetype\x12\x18\n" +
+	"\apreview\x18\n" +
+	" \x01(\tR\apreview\x1aU\n" +
 	"\tFuzzyInfo\x12\x14\n" +
 	"\x05start\x18\x01 \x01(\x05R\x05start\x12\x14\n" +
 	"\x05field\x18\x02 \x01(\tR\x05field\x12\x1c\n" +
@@ -411,15 +422,17 @@ func file_query_proto_rawDescGZIP() []byte {
 	return file_query_proto_rawDescData
 }
 
-var file_query_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_query_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
-var file_query_proto_goTypes = []any{
-	(QueryResponse_Type)(0),              // 0: pb.QueryResponse.Type
-	(*QueryRequest)(nil),                 // 1: pb.QueryRequest
-	(*QueryResponse)(nil),                // 2: pb.QueryResponse
-	(*QueryResponse_Item)(nil),           // 3: pb.QueryResponse.Item
-	(*QueryResponse_Item_FuzzyInfo)(nil), // 4: pb.QueryResponse.Item.FuzzyInfo
-}
+var (
+	file_query_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+	file_query_proto_msgTypes  = make([]protoimpl.MessageInfo, 4)
+	file_query_proto_goTypes   = []any{
+		(QueryResponse_Type)(0),              // 0: pb.QueryResponse.Type
+		(*QueryRequest)(nil),                 // 1: pb.QueryRequest
+		(*QueryResponse)(nil),                // 2: pb.QueryResponse
+		(*QueryResponse_Item)(nil),           // 3: pb.QueryResponse.Item
+		(*QueryResponse_Item_FuzzyInfo)(nil), // 4: pb.QueryResponse.Item.FuzzyInfo
+	}
+)
 var file_query_proto_depIdxs = []int32{
 	3, // 0: pb.QueryResponse.item:type_name -> pb.QueryResponse.Item
 	4, // 1: pb.QueryResponse.Item.fuzzyinfo:type_name -> pb.QueryResponse.Item.FuzzyInfo
