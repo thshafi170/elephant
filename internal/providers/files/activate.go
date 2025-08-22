@@ -82,6 +82,9 @@ func Activate(qid uint32, identifier, action string, arguments string) {
 
 func forceTerminalForFile(file string) bool {
 	cmd := exec.Command("sh", "-c", fmt.Sprintf("xdg-mime query default $(xdg-mime query filetype %s)", file))
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Setsid: true,
+	}
 
 	homedir, err := os.UserHomeDir()
 	if err != nil {

@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/abenz1267/elephant/internal/comm/handlers"
 	"github.com/abenz1267/elephant/internal/common"
@@ -86,6 +87,11 @@ func Activate(qid uint32, identifier, action string, query string) {
 	prefix := common.LaunchPrefix("")
 
 	cmd := exec.Command("sh", "-c", strings.TrimSpace(fmt.Sprintf("%s xdg-open '%s'", prefix, url)))
+
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Setsid: true,
+	}
+
 	err := cmd.Start()
 	if err != nil {
 		slog.Error(Name, "activate", err)

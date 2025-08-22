@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os/exec"
 	"strings"
+	"syscall"
 
 	"github.com/abenz1267/elephant/internal/common"
 )
@@ -40,6 +41,10 @@ func Activate(qid uint32, identifier, action string, arguments string) {
 	toRun = strings.TrimSpace(fmt.Sprintf("%s %s", toRun, arguments))
 
 	cmd := exec.Command("sh", "-c", toRun)
+
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Setsid: true,
+	}
 
 	err := cmd.Start()
 	if err != nil {
