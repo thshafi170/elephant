@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/abenz1267/elephant/internal/common"
@@ -154,6 +155,10 @@ func Activate(qid uint32, identifier, action string, arguments string) {
 	}
 
 	cmd := exec.Command("sh", "-c", run)
+
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Setsid: true,
+	}
 
 	err := cmd.Start()
 	if err != nil {

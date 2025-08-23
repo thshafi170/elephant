@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os/exec"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/abenz1267/elephant/internal/comm/handlers"
@@ -101,6 +102,10 @@ func Activate(qid uint32, identifier, action string, arguments string) {
 	}
 
 	cmd := exec.Command("sh", "-c", run)
+
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Setsid: true,
+	}
 
 	if pipe && e.Value != "" {
 		cmd.Stdin = strings.NewReader(val)

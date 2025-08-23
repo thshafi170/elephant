@@ -48,6 +48,10 @@ func parseFile(path, l, ll string) *DesktopFile {
 
 		if i == 0 {
 			f.Data = data
+
+			if f.Icon == "" {
+				f.Icon = config.IconPlaceholder
+			}
 		} else {
 			f.Actions = append(f.Actions, data)
 		}
