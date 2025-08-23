@@ -28,6 +28,7 @@ type Config struct {
 	ShowGeneric             bool              `koanf:"show_generic" desc:"include generic info when show_actions is true" default:"false"`
 	ShowActionsWithoutQuery bool              `koanf:"show_actions_without_query" desc:"show application actions, if the search query is empty" default:"false"`
 	History                 bool              `koanf:"history" desc:"make use of history for sorting" default:"false"`
+	IconPlaceholder         string            `koanf:"icon_placeholder" desc:"placeholder icon for apps without icon" default:"applications-other"`
 	Aliases                 map[string]string `koanf:"aliases" desc:"setup aliases for applications. Matched aliases will always be placed on top of the list. Example: 'ffp' => '<identifier>'. Check elephant log output when activating an item to get its identifier." default:""`
 }
 
@@ -42,6 +43,7 @@ func init() {
 		ShowGeneric:             false,
 		ShowActionsWithoutQuery: false,
 		History:                 false,
+		IconPlaceholder:         "applications-other",
 		Aliases:                 map[string]string{},
 	}
 
