@@ -21,27 +21,20 @@ func Activate(qid uint32, identifier, action string, arguments string) {
 		arguments = ""
 	}
 
-	if prefix == "" {
-		parts := strings.Split(identifier, ":")
+	parts := strings.Split(identifier, ":")
 
-		if len(parts) == 2 {
-			for _, v := range files[parts[0]].Actions {
-				if v.Action == parts[1] {
-					toRun = v.Exec
-					break
-				}
+	if len(parts) == 2 {
+		for _, v := range files[parts[0]].Actions {
+			if v.Action == parts[1] {
+				toRun = v.Exec
+				break
 			}
-		} else {
-			toRun = files[parts[0]].Exec
 		}
 	} else {
-		toRun = fmt.Sprintf("%s %s", prefix, identifier)
+		toRun = files[parts[0]].Exec
 	}
 
-	toRun = strings.TrimSpace(fmt.Sprintf("%s %s", toRun, arguments))
-
-	cmd := exec.Command("sh", "-c", toRun)
-
+	cmd := exec.Command("sh", "-c", strings.TrimSpace(fmt.Sprintf("%s %s %s", prefix, toRun, arguments)))
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setsid: true,
 	}
